@@ -6,8 +6,16 @@ rustup target add $target
 if ($LASTEXITCODE -ne 0) { throw "Could not install Rust target" }
 cargo test --locked
 if ($LASTEXITCODE -ne 0) { throw "Proxy tests failed" }
-cargo build --release --locked --target $target
-if ($LASTEXITCODE -ne 0) { throw "Proxy build failed" }
+$previousRustFlags = $env:RUSTFLAGS
+try {
+    # Ship a self-contained helper instead of requiring a separate VC++ runtime.
+    $env:RUSTFLAGS = "$previousRustFlags -C target-feature=+crt-static".Trim()
+    cargo build --release --locked --target $target
+    if ($LASTEXITCODE -ne 0) { throw "Proxy build failed" }
+}
+finally {
+    $env:RUSTFLAGS = $previousRustFlags
+}
 $destination = Join-Path $PWD "build/PoFig-$Runtime"
 dotnet publish windows/PoFig/PoFig.csproj -c Release -r $Runtime --self-contained true -o $destination
 if ($LASTEXITCODE -ne 0) { throw "Windows build failed" }
