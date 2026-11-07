@@ -23,7 +23,7 @@ internal sealed class MainForm : Form
     private readonly ListBox profiles = new() { Dock = DockStyle.Fill, IntegralHeight = false, ItemHeight = 28 };
     private readonly Label status = new() { AutoSize = true, Text = "Figma не запущена через PoFig", MaximumSize = new Size(700, 60) };
     private readonly Label appPath = new() { AutoSize = true, AutoEllipsis = true, MaximumSize = new Size(680, 40), ForeColor = SystemColors.GrayText };
-    private readonly Button edit = new() { Text = "Изменить прокси…", AutoSize = true }, remove = new() { Text = "Удалить прокси…", AutoSize = true },
+    private readonly Button edit = new() { Text = "Изменить", AutoSize = true }, remove = new() { Text = "Удалить", AutoSize = true },
         test = new() { Text = "Проверить соединение", AutoSize = true }, launch = new() { Text = "Запустить Figma", AutoSize = true };
     private readonly Label profileHint = new() { AutoSize = true, ForeColor = SystemColors.GrayText, MaximumSize = new Size(680, 60) };
     private ProxyBridge? checker;
@@ -51,7 +51,7 @@ internal sealed class MainForm : Form
         profiles.AccessibleName = "Сохранённые прокси";
         profiles.MinimumSize = new Size(0, 88);
         layout.Controls.Add(profiles, 0, 2);
-        var add = new Button { Text = "Добавить прокси…", AutoSize = true };
+        var add = new Button { Text = "Добавить прокси", AutoSize = true };
         var tools = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 8, 0, 4) };
         tools.Controls.AddRange([add, edit, remove]); layout.Controls.Add(tools, 0, 3);
         layout.Controls.Add(profileHint, 0, 4);
@@ -158,7 +158,7 @@ internal sealed class MainForm : Form
         test.Enabled = selected && !launcher.Active;
         profileHint.Text = launcher.Active
             ? "Изменения профилей применятся при следующем запуске Figma."
-            : "Дважды нажмите на прокси или выберите «Изменить прокси…».";
+            : "Дважды нажмите на прокси или выберите «Изменить».";
         launch.Enabled = selected && !launcher.Active && checker == null;
         appPath.Text = FigmaLauncher.Locate(store.Settings.FigmaPath) ?? "Figma не найдена. Установите официальный клиент.";
     }

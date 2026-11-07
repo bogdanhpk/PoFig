@@ -14,8 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     private let appLabel = NSTextField(labelWithString: "")
     private let testButton = NSButton(title: "Проверить соединение", target: nil, action: nil)
     private let launchButton = NSButton(title: "Запустить Figma", target: nil, action: nil)
-    private let editButton = NSButton(title: "Изменить прокси…", target: nil, action: nil)
-    private let removeButton = NSButton(title: "Удалить прокси…", target: nil, action: nil)
+    private let editButton = NSButton(title: "Изменить", target: nil, action: nil)
+    private let removeButton = NSButton(title: "Удалить", target: nil, action: nil)
     private let profileHint = NSTextField(wrappingLabelWithString: "")
 
     init(store: ProfileStore? = nil, launcher: FigmaSession? = nil) {
@@ -121,7 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         scroll.documentView = table
         scroll.hasVerticalScroller = true
         scroll.borderType = .bezelBorder
-        let add = button("Добавить прокси…", #selector(addProxy))
+        let add = button("Добавить прокси", #selector(addProxy))
         add.setAccessibilityIdentifier("addProxy")
         editButton.target = self; editButton.action = #selector(editProxy)
         removeButton.target = self; removeButton.action = #selector(removeProxy)
@@ -194,7 +194,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         removeButton.isEnabled = hasProfile
         profileHint.stringValue = active
             ? "Изменения профилей применятся при следующем запуске Figma."
-            : hasProfile ? "Дважды нажмите на прокси или выберите «Изменить прокси…»." : "Добавьте прокси, чтобы запустить Figma."
+            : hasProfile ? "Дважды нажмите на прокси или выберите «Изменить»." : "Добавьте прокси, чтобы запустить Figma."
         testButton.isEnabled = hasProfile && !active
         launchButton.isEnabled = hasProfile && !active && checker == nil
         appLabel.stringValue = launcher.locate(savedPath: store.settings.figmaPath)?.path ?? "Figma не найдена. Установите официальный клиент."
