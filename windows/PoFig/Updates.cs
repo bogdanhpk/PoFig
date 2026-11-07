@@ -120,7 +120,7 @@ internal sealed class UpdateController : IDisposable
         dialog.Controls.AddRange([text, progress, cancel]);
         download = new CancellationTokenSource(TimeSpan.FromMinutes(10));
         cancel.Click += (_, _) => { cancel.Enabled = false; download.Cancel(); };
-        dialog.Show(owner);
+        dialog.Show(owner); owner.Enabled = false;
         try
         {
             string target = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
@@ -145,11 +145,11 @@ internal sealed class UpdateController : IDisposable
             handedOff = true; dialog.Close(); install();
         }
         catch (OperationCanceledException) { }
-        catch (Exception ex) { dialog.Close(); MessageBox.Show(owner, ex is InvalidOperationException ? ex.Message : "Не удалось скачать или установить обновление. Проверьте подключение и права на папку PoFig, затем повторите попытку. Текущая версия сохранена.", "Обновление не установлено", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        catch (Exception ex) { dialog.Close(); owner.Enabled = true; MessageBox.Show(owner, ex is InvalidOperationException ? ex.Message : "Не удалось скачать или установить обновление. Проверьте подключение и права на папку PoFig, затем повторите попытку. Текущая версия сохранена.", "Обновление не установлено", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
         finally
         {
             dialog.Close(); download.Dispose(); download = null;
-            if (!handedOff) { if (workerPid > 0) { try { using var worker = Process.GetProcessById(workerPid); worker.Kill(); } catch (ArgumentException) { } catch (InvalidOperationException) { } }; File.Delete(UpdateInstaller.Marker); try { Directory.Delete(workspace, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+            if (!handedOff) { owner.Enabled = true; if (workerPid > 0) { try { using var worker = Process.GetProcessById(workerPid); worker.Kill(); } catch (ArgumentException) { } catch (InvalidOperationException) { } }; try { File.Delete(UpdateInstaller.Marker); } catch (IOException) { } catch (UnauthorizedAccessException) { }; try { Directory.Delete(workspace, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
             busy = false; if (!handedOff) Busy?.Invoke(false);
         }
     }
