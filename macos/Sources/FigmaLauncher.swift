@@ -41,7 +41,18 @@ final class FigmaProxyPreference {
     }
 }
 
-final class FigmaLauncher {
+protocol FigmaSession: AnyObject {
+    var active: Bool { get }
+    var onStatus: ((String, Bool) -> Void)? { get set }
+    var onError: ((Error) -> Void)? { get set }
+    var onLaunched: (() -> Void)? { get set }
+    func recover() throws
+    func locate(savedPath: String?) -> URL?
+    func launch(profile: ProxyProfile, password: String, appURL: URL) throws
+    func finish()
+}
+
+final class FigmaLauncher: FigmaSession {
     private let preference: FigmaProxyPreference
     private var bridge: ProxyBridge?
     private var application: NSRunningApplication?

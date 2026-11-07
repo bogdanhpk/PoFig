@@ -23,8 +23,9 @@ internal sealed class MainForm : Form
     private readonly ListBox profiles = new() { Dock = DockStyle.Fill, IntegralHeight = false, ItemHeight = 28 };
     private readonly Label status = new() { AutoSize = true, Text = "Figma не запущена через PoFig", MaximumSize = new Size(700, 60) };
     private readonly Label appPath = new() { AutoSize = true, AutoEllipsis = true, MaximumSize = new Size(680, 40), ForeColor = SystemColors.GrayText };
-    private readonly Button edit = new() { Text = "Изменить…", AutoSize = true }, remove = new() { Text = "Удалить", AutoSize = true },
+    private readonly Button edit = new() { Text = "Изменить прокси…", AutoSize = true }, remove = new() { Text = "Удалить прокси…", AutoSize = true },
         test = new() { Text = "Проверить соединение", AutoSize = true }, launch = new() { Text = "Запустить Figma", AutoSize = true };
+    private readonly Label profileHint = new() { AutoSize = true, ForeColor = SystemColors.GrayText, MaximumSize = new Size(680, 60) };
     private ProxyBridge? checker;
     private bool refreshing;
     private bool exitRequested;
@@ -38,12 +39,12 @@ internal sealed class MainForm : Form
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Text = "PoFig"; ClientSize = new Size(780, 540); MinimumSize = new Size(720, 540);
         AutoScaleMode = AutoScaleMode.Dpi; StartPosition = FormStartPosition.CenterScreen;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28), ColumnCount = 1, RowCount = 8 };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28), ColumnCount = 1, RowCount = 9 };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        for (int i = 3; i < 8; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (int i = 3; i < 9; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.Controls.Add(new Label { Text = "Figma с вашим прокси", AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont!.FontFamily, 23, FontStyle.Bold) }, 0, 0);
         layout.Controls.Add(new Label { Text = "Запускайте официальную Figma через выбранный сервер.", AutoSize = true, ForeColor = SystemColors.GrayText }, 0, 1);
         profiles.AccessibleName = "Сохранённые прокси";
@@ -51,19 +52,26 @@ internal sealed class MainForm : Form
         var add = new Button { Text = "Добавить прокси…", AutoSize = true };
         var tools = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 8) };
         tools.Controls.AddRange([add, edit, remove]); layout.Controls.Add(tools, 0, 3);
+        layout.Controls.Add(profileHint, 0, 4);
         status.Padding = new Padding(0, 6, 0, 10); status.AccessibleName = "Состояние соединения";
-        layout.Controls.Add(status, 0, 4);
+        layout.Controls.Add(status, 0, 5);
         var appRow = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
         var choose = new Button { Text = "Выбрать Figma…", AutoSize = true };
-        appRow.Controls.AddRange([choose, appPath]); layout.Controls.Add(appRow, 0, 5);
-        layout.Controls.Add(new Label { Text = "После запуска Figma PoFig работает в трее.\nПароли хранятся в Диспетчере учётных данных Windows.", AutoSize = true, ForeColor = SystemColors.GrayText, Padding = new Padding(0, 10, 0, 12) }, 0, 6);
+        appRow.Controls.AddRange([choose, appPath]); layout.Controls.Add(appRow, 0, 6);
+        layout.Controls.Add(new Label { Text = "После запуска Figma PoFig работает в трее.\nПароли хранятся в Диспетчере учётных данных Windows.", AutoSize = true, ForeColor = SystemColors.GrayText, Padding = new Padding(0, 10, 0, 12) }, 0, 7);
         var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
-        actions.Controls.AddRange([launch, test]); layout.Controls.Add(actions, 0, 7);
+        actions.Controls.AddRange([launch, test]); layout.Controls.Add(actions, 0, 8);
         Controls.Add(layout); AcceptButton = launch;
         add.Click += (_, _) => Edit(new ProxyProfile());
         edit.Click += (_, _) => { if (Selected is { } profile) Edit(profile); };
-        profiles.DoubleClick += (_, _) => { if (!launcher.Active && Selected is { } profile) Edit(profile); };
-        remove.Click += (_, _) => { if (Selected is { } profile) Try(() => { CancelCheck(); store.Remove(profile); Reload(); }); };
+        profiles.MouseDoubleClick += (_, e) =>
+        {
+            int index = profiles.IndexFromPoint(e.Location);
+            if (e.Button != MouseButtons.Left || index < 0) return;
+            profiles.SelectedIndex = index;
+            if (Selected is { } profile) Edit(profile);
+        };
+        remove.Click += (_, _) => RemoveSelected();
         profiles.SelectedIndexChanged += (_, _) =>
         {
             if (refreshing) return;
@@ -125,16 +133,26 @@ internal sealed class MainForm : Form
     private void RefreshControls()
     {
         bool selected = Selected != null;
-        edit.Enabled = remove.Enabled = test.Enabled = selected && !launcher.Active;
+        edit.Enabled = remove.Enabled = selected;
+        test.Enabled = selected && !launcher.Active;
+        profileHint.Text = launcher.Active
+            ? "Изменения профилей применятся при следующем запуске Figma."
+            : "Дважды нажмите на прокси или выберите «Изменить прокси…».";
         launch.Enabled = selected && !launcher.Active && checker == null;
         appPath.Text = FigmaLauncher.Locate(store.Settings.FigmaPath) ?? "Figma не найдена. Установите официальный клиент.";
     }
     private void Edit(ProxyProfile profile)
     {
-        if (launcher.Active) return;
         CancelCheck();
         Try(() => { using var dialog = new ProxyEditor(profile, Secrets.Read(profile.Id), (value, password) => store.Save(value, password));
             if (dialog.ShowDialog(this) == DialogResult.OK) Reload(); });
+    }
+    private void RemoveSelected()
+    {
+        if (Selected is not { } profile) return;
+        if (MessageBox.Show(this, $"Удалить прокси «{profile.Name}» и его сохранённый пароль?\n\nОткрытая Figma продолжит работу с текущими настройками.",
+            "Удалить прокси", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+        Try(() => { CancelCheck(); store.Remove(profile); Reload(); });
     }
     private void ChooseFigma()
     {

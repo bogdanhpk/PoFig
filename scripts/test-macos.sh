@@ -36,3 +36,9 @@ Path('build/TrayLifecycle.app/Contents/Info.plist').write_bytes(plistlib.dumps({
 }))
 PY
 build/TrayLifecycle.app/Contents/MacOS/TrayLifecycle
+swiftc -swift-version 5 -parse-as-library -module-cache-path "$PWD/build/swift-cache" \
+  -framework AppKit -framework Security -framework UniformTypeIdentifiers \
+  macos/Sources/App.swift macos/Sources/Profiles.swift macos/Sources/Bridge.swift \
+  macos/Sources/FigmaLauncher.swift macos/Sources/ProxyEditor.swift macos/Sources/TrayController.swift \
+  macos/Tests/ProfileManagement.swift -o build/test-profile-management
+build/test-profile-management

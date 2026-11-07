@@ -1,11 +1,11 @@
 import AppKit
 import UniformTypeIdentifiers
 
-@main
 final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource, NSTableViewDelegate {
     private var window: NSWindow!
     private var store: ProfileStore!
-    private var launcher: FigmaLauncher!
+    private var launcher: FigmaSession!
+    private var refreshingProfiles = false
     private var editor: ProxyEditor?
     private var checker: ProxyBridge?
     private var tray: TrayController?
@@ -15,8 +15,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     private let appLabel = NSTextField(labelWithString: "")
     private let testButton = NSButton(title: "Проверить соединение", target: nil, action: nil)
     private let launchButton = NSButton(title: "Запустить Figma", target: nil, action: nil)
-    private let editButton = NSButton(title: "Изменить…", target: nil, action: nil)
-    private let removeButton = NSButton(title: "Удалить", target: nil, action: nil)
+    private let editButton = NSButton(title: "Изменить прокси…", target: nil, action: nil)
+    private let removeButton = NSButton(title: "Удалить прокси…", target: nil, action: nil)
+    private let profileHint = NSTextField(wrappingLabelWithString: "")
+
+    init(store: ProfileStore? = nil, launcher: FigmaSession? = nil) {
+        self.store = store
+        self.launcher = launcher
+        super.init()
+    }
 
     static func main() {
         let app = NSApplication.shared
@@ -29,8 +36,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureMenu()
         do {
-            store = try ProfileStore()
-            launcher = FigmaLauncher(directory: store.directory)
+            if store == nil { store = try ProfileStore() }
+            if launcher == nil { launcher = FigmaLauncher(directory: store.directory) }
             try launcher.recover()
         } catch {
             showError(error)
@@ -103,8 +110,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         let add = button("Добавить прокси…", #selector(addProxy))
         editButton.target = self; editButton.action = #selector(editProxy)
         removeButton.target = self; removeButton.action = #selector(removeProxy)
+        editButton.setAccessibilityIdentifier("editProxy")
+        removeButton.setAccessibilityIdentifier("removeProxy")
         let tools = NSStackView(views: [add, editButton, removeButton])
         tools.spacing = 8
+        profileHint.font = .systemFont(ofSize: 11)
+        profileHint.textColor = .secondaryLabelColor
         detailLabel.font = .systemFont(ofSize: 12)
         detailLabel.textColor = .secondaryLabelColor
         statusLabel.font = .systemFont(ofSize: 13, weight: .medium)
@@ -125,7 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         launchButton.setAccessibilityIdentifier("launchFigma")
         let actions = NSStackView(views: [testButton, launchButton])
         actions.spacing = 8
-        let body = NSStackView(views: [heading, subtitle, scroll, tools, detailLabel, statusLabel, appRow, note])
+        let body = NSStackView(views: [heading, subtitle, scroll, tools, profileHint, detailLabel, statusLabel, appRow, note])
         body.orientation = .vertical
         body.alignment = .leading
         body.spacing = 14
@@ -136,6 +147,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
             body.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -28),
             scroll.widthAnchor.constraint(equalTo: body.widthAnchor),
             scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 120),
+            tools.widthAnchor.constraint(equalTo: body.widthAnchor),
+            profileHint.widthAnchor.constraint(equalTo: body.widthAnchor),
             appRow.widthAnchor.constraint(equalTo: body.widthAnchor),
             subtitle.widthAnchor.constraint(equalTo: body.widthAnchor),
             detailLabel.widthAnchor.constraint(equalTo: body.widthAnchor),
@@ -145,10 +158,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
             actions.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -28),
             actions.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -24)
         ])
+        reloadProfiles()
+    }
+    private func reloadProfiles() {
+        refreshingProfiles = true
+        let selectedID = store.settings.selectedID
         table.reloadData()
-        if let index = store.settings.profiles.firstIndex(where: { $0.id == store.settings.selectedID }) {
+        if let index = store.settings.profiles.firstIndex(where: { $0.id == selectedID }) {
             table.selectRowIndexes(IndexSet(integer: index), byExtendingSelection: false)
         } else if !store.settings.profiles.isEmpty { table.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false) }
+        else { table.deselectAll(nil) }
+        refreshingProfiles = false
         refreshControls()
     }
     private func button(_ title: String, _ action: Selector) -> NSButton { NSButton(title: title, target: self, action: action) }
@@ -156,8 +176,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     private func refreshControls() {
         let hasProfile = selected != nil
         let active = launcher.active
-        editButton.isEnabled = hasProfile && !active
-        removeButton.isEnabled = hasProfile && !active
+        editButton.isEnabled = hasProfile
+        removeButton.isEnabled = hasProfile
+        profileHint.stringValue = active
+            ? "Изменения профилей применятся при следующем запуске Figma."
+            : "Дважды нажмите на прокси или выберите «Изменить прокси…»."
         testButton.isEnabled = hasProfile && !active
         launchButton.isEnabled = hasProfile && !active && checker == nil
         appLabel.stringValue = launcher.locate(savedPath: store.settings.figmaPath)?.path ?? "Figma не найдена. Установите официальный клиент."
@@ -182,6 +205,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         return cell
     }
     func tableViewSelectionDidChange(_ notification: Notification) {
+        guard !refreshingProfiles else { return }
         cancelCheck()
         var settings = store.settings
         settings.selectedID = selected?.id
@@ -189,8 +213,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         refreshControls()
     }
     @objc private func addProxy() { presentEditor(ProxyProfile()) }
-    @objc private func editProxy() { if !launcher.active, let selected { presentEditor(selected) } }
+    @objc private func editProxy(_ sender: Any?) {
+        if let table = sender as? NSTableView, table.clickedRow < 0 { return }
+        if let selected { presentEditor(selected) }
+    }
     private func presentEditor(_ profile: ProxyProfile) {
+        guard window.attachedSheet == nil else { return }
         cancelCheck()
         do {
             let editor = ProxyEditor(profile: profile, password: try Secrets.read(profile.id))
@@ -198,22 +226,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
             editor.onSave = { [weak self] profile, password in
                 guard let self else { return }
                 try self.store.save(profile, password: password)
-                self.table.reloadData()
-                if let row = self.store.settings.profiles.firstIndex(where: { $0.id == profile.id }) { self.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false) }
-                self.refreshControls()
+                self.reloadProfiles()
             }
             window.beginSheet(editor.window!) { [weak self] _ in self?.editor = nil }
         } catch { showError(error) }
     }
     @objc private func removeProxy() {
-        guard let selected, !launcher.active else { return }
+        guard let selected, window.attachedSheet == nil else { return }
         cancelCheck()
-        do {
-            try store.remove(selected)
-            table.reloadData()
-            if !store.settings.profiles.isEmpty { table.selectRowIndexes(IndexSet(integer: max(0, min(table.selectedRow, store.settings.profiles.count - 1))), byExtendingSelection: false) }
-            refreshControls()
-        } catch { showError(error) }
+        let alert = NSAlert()
+        alert.messageText = "Удалить прокси «\(selected.name)»?"
+        alert.informativeText = "Прокси и его сохранённый пароль будут удалены. Открытая Figma продолжит работу с текущими настройками."
+        alert.addButton(withTitle: "Отмена")
+        alert.addButton(withTitle: "Удалить прокси").hasDestructiveAction = true
+        alert.beginSheetModal(for: window) { [weak self] result in
+            guard let self, result == .alertSecondButtonReturn else { return }
+            do { try self.store.remove(selected); self.reloadProfiles() }
+            catch { self.showError(error) }
+        }
     }
     @objc private func chooseFigma() {
         let panel = NSOpenPanel()

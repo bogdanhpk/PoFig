@@ -71,7 +71,7 @@ internal sealed class ProfileStore
     public void Remove(ProxyProfile profile)
     {
         var profiles = Settings.Profiles.Where(p => p.Id != profile.Id).ToList();
-        Write(Settings with { Profiles = profiles, SelectedId = profiles.FirstOrDefault()?.Id });
+        Write(Settings with { Profiles = profiles, SelectedId = Settings.SelectedId == profile.Id ? profiles.FirstOrDefault()?.Id : Settings.SelectedId });
         Secrets.Delete(profile.Id);
     }
 }
