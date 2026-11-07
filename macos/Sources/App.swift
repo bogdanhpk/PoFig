@@ -133,7 +133,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         let content = window.contentView!
         let heading = NSTextField(labelWithString: "Figma с вашим прокси")
         heading.font = .systemFont(ofSize: 22, weight: .bold)
-        let subtitle = NSTextField(wrappingLabelWithString: "Запускайте официальную Figma через выбранный сервер.")
+        let subtitle = NSTextField(wrappingLabelWithString: "Запускайте официальную Figma через выбранный proxy-сервер.")
         subtitle.textColor = .secondaryLabelColor
         subtitle.font = .systemFont(ofSize: 12)
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("profile"))

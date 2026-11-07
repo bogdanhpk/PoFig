@@ -50,7 +50,7 @@ internal sealed class MainForm : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         for (int i = 3; i < 9; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.Controls.Add(new Label { Text = "Figma с вашим прокси", AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont!.FontFamily, 20, FontStyle.Bold) }, 0, 0);
-        var subtitle = new Label { Text = "Запускайте официальную Figma через выбранный сервер.", AutoSize = true, ForeColor = SystemColors.GrayText };
+        var subtitle = new Label { Text = "Запускайте официальную Figma через выбранный proxy-сервер.", AutoSize = true, ForeColor = SystemColors.GrayText };
         layout.Controls.Add(subtitle, 0, 1);
         profiles.AccessibleName = "Сохранённые прокси";
         profiles.MinimumSize = new Size(0, 88);
