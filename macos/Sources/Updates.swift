@@ -158,6 +158,7 @@ struct UpdateInstaller {
         if FileManager.default.fileExists(atPath: result.path) {
             let value = try JSONSerialization.jsonObject(with: Data(contentsOf: result)) as? [String: Any]
             try FileManager.default.removeItem(at: marker)
+            if value?["status"] as? String == "recovery_failed" { throw PoFigError("Не удалось завершить обновление. Скачайте PoFig заново. Ваши прокси и пароли сохранены.") }
             if value?["status"] as? String != "installed" { throw PoFigError("Обновление не установлено. Предыдущая версия восстановлена. Повторите попытку позже.") }
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                 let id = workspace.lastPathComponent

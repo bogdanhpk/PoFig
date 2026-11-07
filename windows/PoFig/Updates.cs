@@ -23,12 +23,16 @@ internal static class UpdateInstaller
         {
             using var json = JsonDocument.Parse(File.ReadAllText(result));
             File.Delete(Marker);
+            if (json.RootElement.GetProperty("status").GetString() == "recovery_failed") throw new InvalidOperationException("Не удалось завершить обновление. Скачайте PoFig заново. Ваши прокси и пароли сохранены.");
             if (json.RootElement.GetProperty("status").GetString() != "installed") MessageBox.Show("Обновление не установлено. Предыдущая версия восстановлена. Повторите попытку позже.", "PoFig");
             else _ = Task.Run(async () => { await Task.Delay(5000); try { Directory.Delete(workspace, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } });
             return false;
         }
-        try { using var old = Process.GetProcessById(pending.Pid); if (!old.HasExited) return true; }
-        catch (ArgumentException) { }
+        if (pending.Pid > 0)
+        {
+            try { using var old = Process.GetProcessById(pending.Pid); if (!old.HasExited) return true; }
+            catch (ArgumentException) { }
+        }
         var info = new ProcessStartInfo(Path.Combine(workspace, "pofig-updater.exe")) { UseShellExecute = false, CreateNoWindow = true };
         info.ArgumentList.Add("recover"); info.ArgumentList.Add(Path.Combine(workspace, "install.json")); info.ArgumentList.Add(Environment.ProcessId.ToString());
         using var worker = Process.Start(info) ?? throw new InvalidOperationException("Не удалось восстановить обновление. Скачайте PoFig заново.");
@@ -40,15 +44,22 @@ internal static class UpdateInstaller
         foreach (string arg in args) info.ArgumentList.Add(arg);
         using var process = Process.Start(info) ?? throw new InvalidOperationException("Не удалось запустить обновление.");
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-        string? text = await process.StandardOutput.ReadLineAsync(timeout.Token);
-        if (!ready) await process.WaitForExitAsync(timeout.Token);
-        using var value = JsonDocument.Parse(text ?? "{}");
-        if (!value.RootElement.TryGetProperty("event", out var kind) || kind.GetString() != (ready ? "ready" : "prepared"))
+        try
+        {
+            string? text = await process.StandardOutput.ReadLineAsync(timeout.Token);
+            if (!ready) await process.WaitForExitAsync(timeout.Token);
+            using var value = JsonDocument.Parse(text ?? "{}");
+            if (!value.RootElement.TryGetProperty("event", out var kind) || kind.GetString() != (ready ? "ready" : "prepared"))
+            {
+                throw new InvalidOperationException("Не удалось подготовить обновление. Текущая версия сохранена. Попробуйте скачать новую версию со страницы PoFig.");
+            }
+            return value.RootElement.Clone();
+        }
+        catch
         {
             if (!process.HasExited) process.Kill();
-            throw new InvalidOperationException("Не удалось подготовить обновление. Текущая версия сохранена. Попробуйте скачать новую версию со страницы PoFig.");
+            throw;
         }
-        return value.RootElement.Clone();
     }
 }
 

@@ -207,8 +207,19 @@ fn install(path: &Path, recover_pid: Option<u32>) -> Result<()> {
     if let Err(error) = result {
         let recovery = transaction::recover(&job, workspace);
         let message = format!("{error}; rollback: {recovery:?}");
-        write_result(workspace, &job, "failed", &message)?;
-        let _ = launch(&job);
+        write_result(
+            workspace,
+            &job,
+            if recovery.is_ok() {
+                "failed"
+            } else {
+                "recovery_failed"
+            },
+            &message,
+        )?;
+        if recovery.is_ok() {
+            let _ = launch(&job);
+        }
         return Err(message.into());
     }
     write_result(workspace, &job, "installed", "")?;
