@@ -158,7 +158,8 @@ internal sealed class MainForm : Form
         test.Enabled = selected && !launcher.Active;
         profileHint.Text = launcher.Active
             ? "Изменения профилей применятся при следующем запуске Figma."
-            : "Дважды нажмите на прокси или выберите «Изменить».";
+            : selected ? "Дважды нажмите на прокси или выберите «Изменить»." : "";
+        profileHint.Visible = launcher.Active || selected;
         launch.Enabled = selected && !launcher.Active && checker == null;
         appPath.Text = FigmaLauncher.Locate(store.Settings.FigmaPath) ?? "Figma не найдена. Установите официальный клиент.";
     }

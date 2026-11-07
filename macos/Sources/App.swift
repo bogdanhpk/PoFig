@@ -194,7 +194,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         removeButton.isEnabled = hasProfile
         profileHint.stringValue = active
             ? "Изменения профилей применятся при следующем запуске Figma."
-            : hasProfile ? "Дважды нажмите на прокси или выберите «Изменить»." : "Добавьте прокси, чтобы запустить Figma."
+            : hasProfile ? "Дважды нажмите на прокси или выберите «Изменить»." : ""
+        profileHint.isHidden = !active && !hasProfile
         testButton.isEnabled = hasProfile && !active
         launchButton.isEnabled = hasProfile && !active && checker == nil
         appLabel.stringValue = launcher.locate(savedPath: store.settings.figmaPath)?.path ?? "Figma не найдена. Установите официальный клиент."
