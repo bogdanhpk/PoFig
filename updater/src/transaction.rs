@@ -27,18 +27,18 @@ pub fn preflight(job: &InstallJob, new: &Manifest, workspace: &Path) -> Result<(
                 return Err("new update file conflicts with an unrelated file".into());
             }
         }
-    } else {
-        let probe = job
-            .target
-            .parent()
-            .ok_or("no application folder")?
-            .join(format!(".PoFig-access-{}", job.id));
-        fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&probe)?;
-        fs::remove_file(probe)?;
     }
+    let directory = if cfg!(windows) {
+        job.target.as_path()
+    } else {
+        job.target.parent().ok_or("no application folder")?
+    };
+    let probe = directory.join(format!(".PoFig-access-{}", job.id));
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&probe)?;
+    fs::remove_file(probe)?;
     fs::create_dir_all(workspace)?;
     Ok(())
 }
