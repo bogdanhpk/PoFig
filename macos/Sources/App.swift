@@ -11,7 +11,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     private var tray: TrayController?
     private let table = NSTableView()
     private let statusLabel = NSTextField(wrappingLabelWithString: "Figma не запущена через PoFig")
-    private let detailLabel = NSTextField(wrappingLabelWithString: "Добавьте прокси, чтобы запустить Figma.")
     private let appLabel = NSTextField(labelWithString: "")
     private let testButton = NSButton(title: "Проверить соединение", target: nil, action: nil)
     private let launchButton = NSButton(title: "Запустить Figma", target: nil, action: nil)
@@ -81,22 +80,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     }
 
     private func configureWindow() {
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 780, height: 600), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 440), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         window.title = "PoFig"
-        window.minSize = NSSize(width: 720, height: 600)
+        window.contentMinSize = NSSize(width: 600, height: 440)
         window.isReleasedWhenClosed = false
         window.center()
         let content = window.contentView!
         let heading = NSTextField(labelWithString: "Figma с вашим прокси")
-        heading.font = .systemFont(ofSize: 26, weight: .bold)
+        heading.font = .systemFont(ofSize: 22, weight: .bold)
         let subtitle = NSTextField(wrappingLabelWithString: "Запускайте официальную Figma через выбранный сервер.")
         subtitle.textColor = .secondaryLabelColor
-        subtitle.font = .systemFont(ofSize: 13)
+        subtitle.font = .systemFont(ofSize: 12)
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("profile"))
         column.title = "Сохранённые прокси"
         table.addTableColumn(column)
         table.headerView = nil
-        table.rowHeight = 48
+        table.rowHeight = 44
         table.style = .inset
         table.delegate = self
         table.dataSource = self
@@ -108,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         scroll.hasVerticalScroller = true
         scroll.borderType = .bezelBorder
         let add = button("Добавить прокси…", #selector(addProxy))
+        add.setAccessibilityIdentifier("addProxy")
         editButton.target = self; editButton.action = #selector(editProxy)
         removeButton.target = self; removeButton.action = #selector(removeProxy)
         editButton.setAccessibilityIdentifier("editProxy")
@@ -116,47 +116,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         tools.spacing = 8
         profileHint.font = .systemFont(ofSize: 11)
         profileHint.textColor = .secondaryLabelColor
-        detailLabel.font = .systemFont(ofSize: 12)
-        detailLabel.textColor = .secondaryLabelColor
         statusLabel.font = .systemFont(ofSize: 13, weight: .medium)
         statusLabel.setAccessibilityIdentifier("connectionStatus")
         let choose = button("Выбрать Figma…", #selector(chooseFigma))
+        choose.setAccessibilityIdentifier("chooseFigma")
         appLabel.font = .systemFont(ofSize: 11)
         appLabel.textColor = .secondaryLabelColor
         appLabel.lineBreakMode = .byTruncatingMiddle
         let appRow = NSStackView(views: [appLabel, choose])
         appRow.distribution = .fill
         appLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        let note = NSTextField(wrappingLabelWithString: "После запуска Figma PoFig работает в строке меню. Пароли хранятся в Связке ключей.")
+        let note = NSTextField(wrappingLabelWithString: "После запуска Figma PoFig работает в строке меню.\nПароли хранятся в Связке ключей.")
         note.font = .systemFont(ofSize: 11)
         note.textColor = .secondaryLabelColor
         testButton.target = self; testButton.action = #selector(testProxy)
+        testButton.setAccessibilityIdentifier("testProxy")
         launchButton.target = self; launchButton.action = #selector(launchFigma)
         launchButton.keyEquivalent = "\r"
         launchButton.setAccessibilityIdentifier("launchFigma")
         let actions = NSStackView(views: [testButton, launchButton])
         actions.spacing = 8
-        let body = NSStackView(views: [heading, subtitle, scroll, tools, profileHint, detailLabel, statusLabel, appRow, note])
+        let body = NSStackView(views: [heading, subtitle, scroll, tools, profileHint, statusLabel, appRow, note])
         body.orientation = .vertical
         body.alignment = .leading
-        body.spacing = 14
+        body.spacing = 8
         [body, actions].forEach { $0.translatesAutoresizingMaskIntoConstraints = false; content.addSubview($0) }
         NSLayoutConstraint.activate([
-            body.topAnchor.constraint(equalTo: content.topAnchor, constant: 26),
-            body.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 28),
-            body.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -28),
+            body.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            body.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            body.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             scroll.widthAnchor.constraint(equalTo: body.widthAnchor),
-            scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 120),
+            scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 88),
             tools.widthAnchor.constraint(equalTo: body.widthAnchor),
             profileHint.widthAnchor.constraint(equalTo: body.widthAnchor),
             appRow.widthAnchor.constraint(equalTo: body.widthAnchor),
             subtitle.widthAnchor.constraint(equalTo: body.widthAnchor),
-            detailLabel.widthAnchor.constraint(equalTo: body.widthAnchor),
             statusLabel.widthAnchor.constraint(equalTo: body.widthAnchor),
             note.widthAnchor.constraint(equalTo: body.widthAnchor),
-            actions.topAnchor.constraint(equalTo: body.bottomAnchor, constant: 18),
-            actions.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -28),
-            actions.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -24)
+            actions.topAnchor.constraint(equalTo: body.bottomAnchor, constant: 12),
+            actions.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            actions.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -18)
         ])
         reloadProfiles()
     }
@@ -180,11 +179,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         removeButton.isEnabled = hasProfile
         profileHint.stringValue = active
             ? "Изменения профилей применятся при следующем запуске Figma."
-            : "Дважды нажмите на прокси или выберите «Изменить прокси…»."
+            : hasProfile ? "Дважды нажмите на прокси или выберите «Изменить прокси…»." : "Добавьте прокси, чтобы запустить Figma."
         testButton.isEnabled = hasProfile && !active
         launchButton.isEnabled = hasProfile && !active && checker == nil
         appLabel.stringValue = launcher.locate(savedPath: store.settings.figmaPath)?.path ?? "Figma не найдена. Установите официальный клиент."
-        detailLabel.stringValue = selected.map { "\($0.type.label) · \($0.host):\($0.port)\($0.username.isEmpty ? "" : " · с авторизацией")" } ?? "Добавьте прокси, чтобы запустить Figma."
     }
 
     func numberOfRows(in tableView: NSTableView) -> Int { store.settings.profiles.count }

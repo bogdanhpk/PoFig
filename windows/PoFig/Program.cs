@@ -37,28 +37,40 @@ internal sealed class MainForm : Form
     public MainForm(EventWaitHandle showSettings)
     {
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-        Text = "PoFig"; ClientSize = new Size(780, 540); MinimumSize = new Size(720, 540);
+        Text = "PoFig"; ClientSize = new Size(600, 440); MinimumSize = SizeFromClientSize(ClientSize);
         AutoScaleMode = AutoScaleMode.Dpi; StartPosition = FormStartPosition.CenterScreen;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28), ColumnCount = 1, RowCount = 9 };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 9, AutoScroll = true };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         for (int i = 3; i < 9; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.Controls.Add(new Label { Text = "Figma с вашим прокси", AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont!.FontFamily, 23, FontStyle.Bold) }, 0, 0);
-        layout.Controls.Add(new Label { Text = "Запускайте официальную Figma через выбранный сервер.", AutoSize = true, ForeColor = SystemColors.GrayText }, 0, 1);
+        layout.Controls.Add(new Label { Text = "Figma с вашим прокси", AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont!.FontFamily, 20, FontStyle.Bold) }, 0, 0);
+        var subtitle = new Label { Text = "Запускайте официальную Figma через выбранный сервер.", AutoSize = true, ForeColor = SystemColors.GrayText };
+        layout.Controls.Add(subtitle, 0, 1);
         profiles.AccessibleName = "Сохранённые прокси";
+        profiles.MinimumSize = new Size(0, 88);
         layout.Controls.Add(profiles, 0, 2);
         var add = new Button { Text = "Добавить прокси…", AutoSize = true };
-        var tools = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 8) };
+        var tools = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 8, 0, 4) };
         tools.Controls.AddRange([add, edit, remove]); layout.Controls.Add(tools, 0, 3);
         layout.Controls.Add(profileHint, 0, 4);
-        status.Padding = new Padding(0, 6, 0, 10); status.AccessibleName = "Состояние соединения";
+        status.Padding = new Padding(0, 4, 0, 6); status.AccessibleName = "Состояние соединения";
         layout.Controls.Add(status, 0, 5);
-        var appRow = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
+        var appRow = new TableLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
+        appRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        appRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         var choose = new Button { Text = "Выбрать Figma…", AutoSize = true };
-        appRow.Controls.AddRange([choose, appPath]); layout.Controls.Add(appRow, 0, 6);
-        layout.Controls.Add(new Label { Text = "После запуска Figma PoFig работает в трее.\nПароли хранятся в Диспетчере учётных данных Windows.", AutoSize = true, ForeColor = SystemColors.GrayText, Padding = new Padding(0, 10, 0, 12) }, 0, 7);
+        appPath.AutoSize = false; appPath.Dock = DockStyle.Fill; appPath.MaximumSize = Size.Empty;
+        appPath.TextAlign = ContentAlignment.MiddleLeft; appPath.Margin = new Padding(8, 0, 0, 0);
+        appRow.Controls.Add(choose, 0, 0); appRow.Controls.Add(appPath, 1, 0); layout.Controls.Add(appRow, 0, 6);
+        var note = new Label { Text = "После запуска Figma PoFig работает в трее.\nПароли хранятся в Диспетчере учётных данных Windows.", AutoSize = true, ForeColor = SystemColors.GrayText, Padding = new Padding(0, 6, 0, 8) };
+        layout.Controls.Add(note, 0, 7);
+        layout.SizeChanged += (_, _) =>
+        {
+            int width = Math.Max(1, layout.ClientSize.Width - layout.Padding.Horizontal - 6);
+            foreach (var label in new[] { subtitle, profileHint, status, note }) label.MaximumSize = new Size(width, 0);
+        };
         var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
         actions.Controls.AddRange([launch, test]); layout.Controls.Add(actions, 0, 8);
         Controls.Add(layout); AcceptButton = launch;

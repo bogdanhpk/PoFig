@@ -10,9 +10,9 @@ PoFig сохраняет профили прокси и запускает ус�
 
 | Платформа | Архив |
 | --- | --- |
-| macOS 13+, Apple Silicon и Intel | [PoFig-macOS.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.1/PoFig-macOS.zip) |
-| Windows x64 | [PoFig-win-x64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.1/PoFig-win-x64.zip) |
-| Windows ARM64 | [PoFig-win-arm64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.1/PoFig-win-arm64.zip) |
+| macOS 13+, Apple Silicon и Intel | [PoFig-macOS.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.2/PoFig-macOS.zip) |
+| Windows x64 | [PoFig-win-x64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.2/PoFig-win-x64.zip) |
+| Windows ARM64 | [PoFig-win-arm64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.2/PoFig-win-arm64.zip) |
 
 [Все выпуски и контрольные суммы](https://github.com/bogdanhpk/PoFig/releases). macOS-сборка пока имеет локальную подпись и не заверена Apple. Интерфейс Windows пока не проверен на Windows.
 
