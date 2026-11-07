@@ -36,9 +36,20 @@ Path('build/TrayLifecycle.app/Contents/Info.plist').write_bytes(plistlib.dumps({
 }))
 PY
 build/TrayLifecycle.app/Contents/MacOS/TrayLifecycle
+mkdir -p build/ProfileManagement.app/Contents/MacOS build/ProfileManagement.app/Contents/Resources
 swiftc -swift-version 5 -parse-as-library -module-cache-path "$PWD/build/swift-cache" \
   -framework AppKit -framework Security -framework UniformTypeIdentifiers \
   macos/Sources/App.swift macos/Sources/Profiles.swift macos/Sources/Bridge.swift \
   macos/Sources/FigmaLauncher.swift macos/Sources/ProxyEditor.swift macos/Sources/TrayController.swift \
-  macos/Tests/ProfileManagement.swift -o build/test-profile-management
-build/test-profile-management
+  macos/Tests/ProfileManagement.swift -o build/ProfileManagement.app/Contents/MacOS/ProfileManagement
+cp assets/PoFig-status.svg build/ProfileManagement.app/Contents/Resources/
+python3 - <<'PY'
+from pathlib import Path
+import plistlib
+Path('build/ProfileManagement.app/Contents/Info.plist').write_bytes(plistlib.dumps({
+    'CFBundleIdentifier': 'app.pofig.tests.profiles',
+    'CFBundleExecutable': 'ProfileManagement',
+    'CFBundlePackageType': 'APPL',
+}))
+PY
+build/ProfileManagement.app/Contents/MacOS/ProfileManagement
