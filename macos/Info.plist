@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleExecutable</key><string>PoFig</string>
+  <key>CFBundleIdentifier</key><string>app.pofig.desktop</string>
+  <key>CFBundleName</key><string>PoFig</string>
+  <key>CFBundleDisplayName</key><string>PoFig</string>
+  <key>CFBundleIconFile</key><string>PoFig.icns</string>
+  <key>CFBundleVersion</key><string>3</string>
+  <key>CFBundleShortVersionString</key><string>0.1.0</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>LSMinimumSystemVersion</key><string>13.0</string>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSHumanReadableCopyright</key><string>PoFig is an independent companion app. Figma is a trademark of Figma, Inc.</string>
+</dict></plist>

@@ -1,0 +1,28 @@
+[package]
+name = "pofig-proxy"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Loopback proxy bridge for the native PoFig launcher"
+
+[[bin]]
+name = "pofig-proxy"
+path = "proxy/src/main.rs"
+
+[dependencies]
+base64 = "0.22.1"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+tokio = { version = "1.52.3", features = ["rt-multi-thread", "macros", "net", "io-util", "io-std", "time", "sync"] }
+rustls = { version = "0.23.40", default-features = false, features = ["ring", "std", "tls12"] }
+tokio-rustls = { version = "0.26.4", default-features = false, features = ["ring", "tls12"] }
+rustls-platform-verifier = "0.7.0"
+url = "2.5.8"
+
+[dev-dependencies]
+rcgen = { version = "0.14.10", default-features = false, features = ["crypto", "ring"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

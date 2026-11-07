@@ -1,0 +1,192 @@
+using System.Diagnostics;
+
+namespace PoFig;
+
+internal static class Program
+{
+    [STAThread]
+    private static void Main()
+    {
+        ApplicationConfiguration.Initialize();
+        using var showSettings = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\PoFig.ShowSettings");
+        using var mutex = new Mutex(true, @"Local\PoFig.Desktop", out bool first);
+        if (!first) { showSettings.Set(); return; }
+        try { Application.Run(new MainForm(showSettings)); }
+        catch (Exception ex) { MessageBox.Show(ex.Message, "PoFig", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+    }
+}
+
+internal sealed class MainForm : Form
+{
+    private readonly ProfileStore store = new();
+    private readonly FigmaLauncher launcher = new();
+    private readonly ListBox profiles = new() { Dock = DockStyle.Fill, IntegralHeight = false, ItemHeight = 28 };
+    private readonly Label status = new() { AutoSize = true, Text = "Figma не запущена через PoFig", MaximumSize = new Size(700, 60) };
+    private readonly Label appPath = new() { AutoSize = true, AutoEllipsis = true, MaximumSize = new Size(680, 40), ForeColor = SystemColors.GrayText };
+    private readonly Button edit = new() { Text = "Изменить…", AutoSize = true }, remove = new() { Text = "Удалить", AutoSize = true },
+        test = new() { Text = "Проверить соединение", AutoSize = true }, launch = new() { Text = "Запустить Figma", AutoSize = true };
+    private ProxyBridge? checker;
+    private bool refreshing;
+    private bool exitRequested;
+    private readonly NotifyIcon tray = new();
+    private readonly ToolStripMenuItem trayStatus = new("Figma не запущена через PoFig") { Enabled = false };
+    private RegisteredWaitHandle? reopenListener;
+    private ProxyProfile? Selected => profiles.SelectedItem as ProxyProfile;
+
+    public MainForm(EventWaitHandle showSettings)
+    {
+        Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        Text = "PoFig"; ClientSize = new Size(780, 540); MinimumSize = new Size(720, 540);
+        AutoScaleMode = AutoScaleMode.Dpi; StartPosition = FormStartPosition.CenterScreen;
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28), ColumnCount = 1, RowCount = 8 };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        for (int i = 3; i < 8; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.Controls.Add(new Label { Text = "Figma с вашим прокси", AutoSize = true, Font = new Font(SystemFonts.MessageBoxFont!.FontFamily, 23, FontStyle.Bold) }, 0, 0);
+        layout.Controls.Add(new Label { Text = "Запускайте официальную Figma через выбранный сервер.", AutoSize = true, ForeColor = SystemColors.GrayText }, 0, 1);
+        profiles.AccessibleName = "Сохранённые прокси";
+        layout.Controls.Add(profiles, 0, 2);
+        var add = new Button { Text = "Добавить прокси…", AutoSize = true };
+        var tools = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 8) };
+        tools.Controls.AddRange([add, edit, remove]); layout.Controls.Add(tools, 0, 3);
+        status.Padding = new Padding(0, 6, 0, 10); status.AccessibleName = "Состояние соединения";
+        layout.Controls.Add(status, 0, 4);
+        var appRow = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill };
+        var choose = new Button { Text = "Выбрать Figma…", AutoSize = true };
+        appRow.Controls.AddRange([choose, appPath]); layout.Controls.Add(appRow, 0, 5);
+        layout.Controls.Add(new Label { Text = "После запуска Figma PoFig работает в трее.\nПароли хранятся в Диспетчере учётных данных Windows.", AutoSize = true, ForeColor = SystemColors.GrayText, Padding = new Padding(0, 10, 0, 12) }, 0, 6);
+        var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
+        actions.Controls.AddRange([launch, test]); layout.Controls.Add(actions, 0, 7);
+        Controls.Add(layout); AcceptButton = launch;
+        add.Click += (_, _) => Edit(new ProxyProfile());
+        edit.Click += (_, _) => { if (Selected is { } profile) Edit(profile); };
+        profiles.DoubleClick += (_, _) => { if (!launcher.Active && Selected is { } profile) Edit(profile); };
+        remove.Click += (_, _) => { if (Selected is { } profile) Try(() => { CancelCheck(); store.Remove(profile); Reload(); }); };
+        profiles.SelectedIndexChanged += (_, _) =>
+        {
+            if (refreshing) return;
+            CancelCheck(); Try(() => store.Write(store.Settings with { SelectedId = Selected?.Id })); RefreshControls();
+        };
+        choose.Click += (_, _) => ChooseFigma(); test.Click += (_, _) => Check(); launch.Click += (_, _) => Launch();
+        launcher.Status += text => { status.Text = text; trayStatus.Text = text; RefreshControls(); };
+        launcher.Launched += HideToTray;
+        launcher.Error += Error;
+        var trayMenu = new ContextMenuStrip();
+        trayMenu.Items.Add(trayStatus);
+        trayMenu.Items.Add(new ToolStripSeparator());
+        trayMenu.Items.Add("Показать PoFig", null, (_, _) => ShowSettings());
+        trayMenu.Items.Add("Завершить PoFig", null, (_, _) => { exitRequested = true; Close(); });
+        tray.Icon = Icon ?? SystemIcons.Application;
+        tray.Text = "PoFig — настройки прокси";
+        tray.ContextMenuStrip = trayMenu;
+        tray.DoubleClick += (_, _) => ShowSettings();
+        tray.Visible = true;
+        Resize += (_, _) => { if (WindowState == FormWindowState.Minimized) HideToTray(); };
+        Shown += (_, _) =>
+        {
+            reopenListener ??= ThreadPool.RegisterWaitForSingleObject(showSettings, (_, _) =>
+            {
+                try { if (!IsDisposed && IsHandleCreated) BeginInvoke(new Action(() => { if (!IsDisposed) ShowSettings(); })); }
+                catch (InvalidOperationException) { }
+            }, null, Timeout.Infinite, false);
+        };
+        FormClosing += (_, e) =>
+        {
+            if (e.CloseReason == CloseReason.UserClosing && !exitRequested) { e.Cancel = true; HideToTray(); return; }
+            if (launcher.Active && e.CloseReason != CloseReason.WindowsShutDown)
+            {
+                e.Cancel = true; exitRequested = false; ShowSettings();
+                MessageBox.Show(this, "Сначала закройте Figma. Пока она открыта, PoFig поддерживает её соединение с прокси.", "PoFig");
+                return;
+            }
+            checker?.Dispose(); launcher.Dispose();
+            reopenListener?.Unregister(null);
+            tray.Visible = false; tray.Dispose(); trayMenu.Dispose();
+        };
+        Reload();
+    }
+    private void HideToTray() { Hide(); ShowInTaskbar = false; }
+    private void ShowSettings()
+    {
+        WindowState = FormWindowState.Normal;
+        ShowInTaskbar = true;
+        Show(); Activate();
+    }
+    private void Reload()
+    {
+        refreshing = true; profiles.Items.Clear();
+        foreach (var profile in store.Settings.Profiles) profiles.Items.Add(profile);
+        profiles.SelectedIndex = store.Settings.Profiles.FindIndex(p => p.Id == store.Settings.SelectedId);
+        if (profiles.SelectedIndex < 0 && profiles.Items.Count > 0) profiles.SelectedIndex = 0;
+        refreshing = false; RefreshControls();
+    }
+    private void RefreshControls()
+    {
+        bool selected = Selected != null;
+        edit.Enabled = remove.Enabled = test.Enabled = selected && !launcher.Active;
+        launch.Enabled = selected && !launcher.Active && checker == null;
+        appPath.Text = FigmaLauncher.Locate(store.Settings.FigmaPath) ?? "Figma не найдена. Установите официальный клиент.";
+    }
+    private void Edit(ProxyProfile profile)
+    {
+        if (launcher.Active) return;
+        CancelCheck();
+        Try(() => { using var dialog = new ProxyEditor(profile, Secrets.Read(profile.Id), (value, password) => store.Save(value, password));
+            if (dialog.ShowDialog(this) == DialogResult.OK) Reload(); });
+    }
+    private void ChooseFigma()
+    {
+        using var dialog = new OpenFileDialog { Filter = "Figma|Figma.exe", Title = "Выберите официальный Figma.exe" };
+        if (dialog.ShowDialog(this) == DialogResult.OK) Try(() =>
+        {
+            if (!string.Equals(Path.GetFileName(dialog.FileName), "Figma.exe", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Выберите официальный Figma.exe.");
+            store.Write(store.Settings with { FigmaPath = dialog.FileName }); RefreshControls();
+        });
+    }
+    private void CancelCheck()
+    {
+        if (checker == null) return;
+        checker.Dispose(); checker = null; test.Text = "Проверить соединение"; status.Text = "Проверка отменена."; RefreshControls();
+    }
+    private void Check()
+    {
+        if (checker != null) { CancelCheck(); return; }
+        if (Selected is not { } profile) return;
+        Try(() =>
+        {
+            string password = Secrets.Read(profile.Id);
+            checker = new ProxyBridge();
+            bool receivedResult = false;
+            checker.Event += value =>
+            {
+                string? kind = value.GetProperty("event").GetString();
+                if (kind == "checked") { receivedResult = true; status.Text = $"figma.com доступен через прокси · {value.GetProperty("latency_ms").GetInt64()} мс"; }
+                if (kind == "error") { receivedResult = true; status.Text = value.GetProperty("message").GetString(); }
+            };
+            checker.Exited += () => { if (!receivedResult) status.Text = "Проверка завершилась без ответа. Повторите попытку."; checker = null; test.Text = "Проверить соединение"; RefreshControls(); };
+            try { checker.Start(profile, password, "check"); }
+            catch { checker.Dispose(); checker = null; throw; }
+            test.Text = "Отменить проверку"; status.Text = "Проверяем доступ к figma.com…"; RefreshControls();
+        });
+    }
+    private void Launch()
+    {
+        if (Selected is not { } profile) return;
+        string? executable = FigmaLauncher.Locate(store.Settings.FigmaPath);
+        if (executable == null)
+        {
+            if (MessageBox.Show(this, "PoFig запускает официальный клиент Figma. Открыть страницу загрузки?", "Установите Figma", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                Process.Start(new ProcessStartInfo("https://www.figma.com/downloads/") { UseShellExecute = true });
+            return;
+        }
+        Try(() => launcher.Launch(profile, Secrets.Read(profile.Id), executable));
+    }
+    private void Try(Action action) { try { action(); } catch (Exception ex) { Error(ex); } }
+    private void Error(Exception error)
+    {
+        ShowSettings();
+        MessageBox.Show(this, error.Message, "PoFig", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+    }
+}

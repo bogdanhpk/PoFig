@@ -1,0 +1,43 @@
+name: Build native apps
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked
+      - run: bash scripts/build-macos.sh --universal
+      - run: bash scripts/test-macos.sh
+      - run: python3 scripts/test-ipc.py build/PoFig.app/Contents/MacOS/pofig-proxy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PoFig-macOS
+          path: build/PoFig-macOS.zip
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: ./scripts/build-windows.ps1
+        shell: pwsh
+      - run: python scripts/test-ipc.py target/x86_64-pc-windows-msvc/release/pofig-proxy.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PoFig-Windows-x64
+          path: build/PoFig-win-x64.zip
