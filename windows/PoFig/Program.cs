@@ -25,7 +25,7 @@ internal sealed class MainForm : Form
     private readonly Label appPath = new() { AutoSize = true, AutoEllipsis = true, MaximumSize = new Size(680, 40), ForeColor = SystemColors.GrayText };
     private readonly Button edit = new() { Text = "Изменить", AutoSize = true }, remove = new() { Text = "Удалить", AutoSize = true },
         test = new() { Text = "Проверить соединение", AutoSize = true }, launch = new() { Text = "Запустить Figma", AutoSize = true };
-    private readonly Label profileHint = new() { AutoSize = true, ForeColor = SystemColors.GrayText, MaximumSize = new Size(680, 60) };
+    private readonly Label profileHint = new() { Text = "Изменения профилей применятся при следующем запуске Figma.", AutoSize = true, ForeColor = SystemColors.GrayText, MaximumSize = new Size(680, 60) };
     private ProxyBridge? checker;
     private bool refreshing;
     private bool exitRequested;
@@ -156,10 +156,7 @@ internal sealed class MainForm : Form
         bool selected = Selected != null;
         edit.Enabled = remove.Enabled = selected;
         test.Enabled = selected && !launcher.Active;
-        profileHint.Text = launcher.Active
-            ? "Изменения профилей применятся при следующем запуске Figma."
-            : selected ? "Дважды нажмите на прокси или выберите «Изменить»." : "";
-        profileHint.Visible = launcher.Active || selected;
+        profileHint.Visible = launcher.Active;
         launch.Enabled = selected && !launcher.Active && checker == null;
         appPath.Text = FigmaLauncher.Locate(store.Settings.FigmaPath) ?? "Figma не найдена. Установите официальный клиент.";
     }

@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     private let launchButton = NSButton(title: "Запустить Figma", target: nil, action: nil)
     private let editButton = NSButton(title: "Изменить", target: nil, action: nil)
     private let removeButton = NSButton(title: "Удалить", target: nil, action: nil)
-    private let profileHint = NSTextField(wrappingLabelWithString: "")
+    private let profileHint = NSTextField(wrappingLabelWithString: "Изменения профилей применятся при следующем запуске Figma.")
 
     init(store: ProfileStore? = nil, launcher: FigmaSession? = nil) {
         self.store = store
@@ -192,10 +192,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         let active = launcher.active
         editButton.isEnabled = hasProfile
         removeButton.isEnabled = hasProfile
-        profileHint.stringValue = active
-            ? "Изменения профилей применятся при следующем запуске Figma."
-            : hasProfile ? "Дважды нажмите на прокси или выберите «Изменить»." : ""
-        profileHint.isHidden = !active && !hasProfile
+        profileHint.isHidden = !active
         testButton.isEnabled = hasProfile && !active
         launchButton.isEnabled = hasProfile && !active && checker == nil
         appLabel.stringValue = launcher.locate(savedPath: store.settings.figmaPath)?.path ?? "Figma не найдена. Установите официальный клиент."

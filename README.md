@@ -8,9 +8,9 @@
 
 | Для вашего компьютера | Скачать |
 | --- | --- |
-| Mac, macOS 13 и новее | [PoFig для Mac](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.7/PoFig-macOS.zip) |
-| Windows | [PoFig для Windows](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.7/PoFig-win-x64.zip) |
-| Windows на ARM | [PoFig для Windows на ARM](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.7/PoFig-win-arm64.zip) |
+| Mac, macOS 13 и новее | [PoFig для Mac](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.8/PoFig-macOS.zip) |
+| Windows | [PoFig для Windows](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.8/PoFig-win-x64.zip) |
+| Windows на ARM | [PoFig для Windows на ARM](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.8/PoFig-win-arm64.zip) |
 
 [Все версии](https://github.com/bogdanhpk/PoFig/releases). Версия для Windows пока предварительная.
 
