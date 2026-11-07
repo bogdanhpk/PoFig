@@ -8,9 +8,9 @@
 
 | Для вашего компьютера | Скачать |
 | --- | --- |
-| Mac, macOS 13 и новее | [PoFig для Mac](https://github.com/bogdanhpk/PoFig/releases/download/v0.2.0/PoFig-macOS.zip) |
-| Windows | [PoFig для Windows](https://github.com/bogdanhpk/PoFig/releases/download/v0.2.0/PoFig-win-x64.zip) |
-| Windows на ARM | [PoFig для Windows на ARM](https://github.com/bogdanhpk/PoFig/releases/download/v0.2.0/PoFig-win-arm64.zip) |
+| Mac, macOS 13 и новее | [PoFig для Mac](https://github.com/bogdanhpk/PoFig/releases/download/v0.2.1/PoFig-macOS.zip) |
+| Windows | [PoFig для Windows](https://github.com/bogdanhpk/PoFig/releases/download/v0.2.1/PoFig-win-x64.zip) |
+| Windows на ARM | [PoFig для Windows на ARM](https://github.com/bogdanhpk/PoFig/releases/download/v0.2.1/PoFig-win-arm64.zip) |
 
 [Все версии](https://github.com/bogdanhpk/PoFig/releases). Версия для Windows пока предварительная.
 
@@ -41,9 +41,9 @@
 
 PoFig сам проверяет новые выпуски в GitHub. Когда появится новая версия, нажмите **«Обновить»** — приложение скачает её и перезапустится. Прокси и пароли сохранятся. Перед установкой полностью закройте Figma. Если Mac запросит разрешение на открытие новой версии, следуйте инструкции ниже.
 
-Проверить вручную можно кнопкой **«Обновления»** или через меню значка PoFig. Если нет интернета, проверка повторится позже.
+Кнопка **«Обновить»** появляется только при наличии новой версии. Проверить обновления вручную можно через меню PoFig или его значка. Если нет интернета, проверка повторится позже.
 
-Версию **0.2.0** нужно установить из архива один раз. Следующие версии можно обновлять из приложения.
+Версию **0.2.1** нужно установить из архива один раз. Следующие версии можно обновлять из приложения.
 
 ## Если Mac не открывает PoFig
 

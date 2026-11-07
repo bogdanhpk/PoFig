@@ -30,7 +30,7 @@ internal sealed class MainForm : Form
     private bool refreshing;
     private bool exitRequested;
     private bool updateBusy, updateExit;
-    private readonly Button updates = new() { Text = "Обновления", AutoSize = true };
+    private readonly Button updates = new() { Text = "Обновить", AutoSize = true, Visible = false };
     private readonly UpdateController updater;
     private readonly NotifyIcon tray = new();
     private readonly ToolStripMenuItem trayStatus = new("Figma не запущена через PoFig") { Enabled = false };
@@ -105,7 +105,7 @@ internal sealed class MainForm : Form
         var updateItem = new ToolStripMenuItem("Проверить обновления…", null, (_, _) => { ShowSettings(); updater.Selected(); });
         trayMenu.Items.Add(updateItem);
         updates.Click += (_, _) => updater.Selected();
-        updater.Changed += (title, enabled) => { updates.Text = title; updates.Enabled = enabled; updateItem.Text = title == "Обновить" ? "Обновить PoFig…" : "Проверить обновления…"; updateItem.Enabled = enabled; };
+        updater.Changed += (title, enabled) => { updates.Text = title; updates.Enabled = enabled; updates.Visible = title == "Обновить"; updateItem.Text = title == "Обновить" ? "Обновить PoFig…" : "Проверить обновления…"; updateItem.Enabled = enabled; };
         updater.Busy += busy => { updateBusy = busy; RefreshControls(); };
         trayMenu.Items.Add("О PoFig", null, (_, _) => ShowAbout());
         trayMenu.Items.Add("Завершить PoFig", null, (_, _) => { exitRequested = true; Close(); });

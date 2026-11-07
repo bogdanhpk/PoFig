@@ -63,6 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
             self.updater = updater
             updater.onChange = { [weak self] title, enabled in
                 self?.updateButton.title = title; self?.updateButton.isEnabled = enabled
+                self?.updateButton.isHidden = title != "Обновить"
                 self?.updateMenuItem?.title = title == "Обновить" ? "Обновить PoFig…" : "Проверить обновления…"
                 self?.updateMenuItem?.isEnabled = enabled
                 self?.tray?.updateAvailable(title == "Обновить", enabled: enabled)
@@ -178,6 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         launchButton.target = self; launchButton.action = #selector(launchFigma)
         launchButton.keyEquivalent = "\r"
         launchButton.setAccessibilityIdentifier("launchFigma")
+        updateButton.isHidden = true
         updateButton.target = self; updateButton.action = #selector(checkForUpdates)
         updateButton.setAccessibilityIdentifier("checkForUpdates")
         let actions = NSStackView(views: [updateButton, testButton, launchButton])

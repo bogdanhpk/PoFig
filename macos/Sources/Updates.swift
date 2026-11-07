@@ -282,7 +282,7 @@ final class UpdateController: NSObject {
         defer {
             if let panel = progressPanel { window?.endSheet(panel) }; progressPanel = nil
             if !handedOff { if workerPID > 0 { kill(workerPID, SIGTERM) }; try? FileManager.default.removeItem(at: marker); try? FileManager.default.removeItem(at: stage); try? FileManager.default.removeItem(at: workspace) }
-            installing = false; onBusy?(false)
+            if !handedOff { installing = false; onBusy?(false) }
         }
         do {
             guard target.pathExtension == "app", FileManager.default.isWritableFile(atPath: target.deletingLastPathComponent().path) else { throw PoFigError("Перенесите PoFig в папку «Программы» своего пользователя и повторите обновление. Также можно скачать новую версию со страницы PoFig на GitHub.") }
@@ -309,7 +309,9 @@ final class UpdateController: NSObject {
             guard let pid = ready["pid"] as? Int32 else { throw PoFigError("Не удалось запустить обновление.") }
             workerPID = pid
             try JSONEncoder().encode(UpdateInstaller.Pending(workspace: workspace.path, pid: pid)).write(to: marker, options: .atomic)
-            handedOff = true; onInstall?()
+            handedOff = true
+            if let panel = progressPanel { window?.endSheet(panel); progressPanel = nil }
+            DispatchQueue.main.async { [weak self] in self?.onInstall?() }
         } catch {
             if let panel = progressPanel { window?.endSheet(panel); progressPanel = nil }
             if (error as NSError).code != NSURLErrorCancelled { message("Обновление не установлено", (error as? PoFigError)?.message ?? "Не удалось скачать или установить обновление. Проверьте подключение и повторите попытку. Текущая версия сохранена.") }
