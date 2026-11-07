@@ -33,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppIcon.apply()
         configureMenu()
         do {
             if store == nil { store = try ProfileStore() }
@@ -88,7 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
             .font: NSFont.systemFont(ofSize: 12), .paragraphStyle: paragraph
         ])
         var options: [NSApplication.AboutPanelOptionKey: Any] = [.credits: credits]
-        if let url = Bundle.main.url(forResource: "PoFig", withExtension: "icns"), let icon = NSImage(contentsOf: url) {
+        if let icon = NSApp.applicationIconImage {
             options[.applicationIcon] = icon
         }
         NSApp.orderFrontStandardAboutPanel(options: options)

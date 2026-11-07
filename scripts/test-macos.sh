@@ -23,9 +23,9 @@ build/test-preference-recovery "$PWD/build/preference-tests"
 mkdir -p build/TrayLifecycle.app/Contents/MacOS build/TrayLifecycle.app/Contents/Resources
 swiftc -swift-version 5 -parse-as-library -module-cache-path "$PWD/build/swift-cache" \
   -framework AppKit -framework Security macos/Sources/Profiles.swift macos/Sources/Bridge.swift \
-  macos/Sources/TrayController.swift macos/Tests/TrayLifecycle.swift -o build/TrayLifecycle.app/Contents/MacOS/TrayLifecycle
+  macos/Sources/AppIcon.swift macos/Sources/TrayController.swift macos/Tests/TrayLifecycle.swift -o build/TrayLifecycle.app/Contents/MacOS/TrayLifecycle
 cp build/PoFig.app/Contents/MacOS/pofig-proxy build/TrayLifecycle.app/Contents/MacOS/
-cp assets/PoFig-status.svg build/TrayLifecycle.app/Contents/Resources/
+cp assets/PoFig-status.svg assets/PoFig.icns build/TrayLifecycle.app/Contents/Resources/
 python3 - <<'PY'
 from pathlib import Path
 import plistlib
@@ -39,10 +39,10 @@ build/TrayLifecycle.app/Contents/MacOS/TrayLifecycle
 mkdir -p build/ProfileManagement.app/Contents/MacOS build/ProfileManagement.app/Contents/Resources
 swiftc -swift-version 5 -parse-as-library -module-cache-path "$PWD/build/swift-cache" \
   -framework AppKit -framework Security -framework UniformTypeIdentifiers \
-  macos/Sources/App.swift macos/Sources/Profiles.swift macos/Sources/Bridge.swift \
+  macos/Sources/App.swift macos/Sources/AppIcon.swift macos/Sources/Profiles.swift macos/Sources/Bridge.swift \
   macos/Sources/FigmaLauncher.swift macos/Sources/ProxyEditor.swift macos/Sources/TrayController.swift \
   macos/Tests/ProfileManagement.swift -o build/ProfileManagement.app/Contents/MacOS/ProfileManagement
-cp assets/PoFig-status.svg build/ProfileManagement.app/Contents/Resources/
+cp assets/PoFig-status.svg assets/PoFig.icns build/ProfileManagement.app/Contents/Resources/
 python3 - <<'PY'
 from pathlib import Path
 import plistlib

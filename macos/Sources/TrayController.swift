@@ -43,6 +43,7 @@ final class TrayController: NSObject, NSWindowDelegate {
 
     @objc func showWindow() {
         NSApp.setActivationPolicy(.regular)
+        AppIcon.apply()
         if window?.isMiniaturized == true { window?.deminiaturize(nil) }
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
