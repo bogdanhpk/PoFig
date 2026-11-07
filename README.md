@@ -1,6 +1,6 @@
 # PoFig
 
-<img src="assets/PoFig.png" width="128" alt="Иконка PoFig">
+<img src="https://raw.githubusercontent.com/bogdanhpk/PoFig/main/assets/PoFig.png" width="128" alt="Иконка PoFig">
 
 Запускайте официальную Figma через свой прокси на Mac и Windows.
 
@@ -39,7 +39,7 @@
 
 ## Если Mac не открывает PoFig
 
-При первом открытии Mac может запросить разрешение на запуск. Следуйте [инструкции для Mac](macos/OPEN-FIRST.txt). Она также есть в архиве под названием **OPEN-MAC-FIRST.txt**.
+При первом открытии Mac может запросить разрешение на запуск. Следуйте [инструкции для Mac](https://github.com/bogdanhpk/PoFig/blob/main/macos/OPEN-FIRST.txt). Она также есть в архиве под названием **OPEN-MAC-FIRST.txt**.
 
 ## Если нет соединения
 
