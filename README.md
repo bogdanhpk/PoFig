@@ -10,9 +10,9 @@ PoFig сохраняет профили прокси и запускает ус�
 
 | Платформа | Архив |
 | --- | --- |
-| macOS 13+, Apple Silicon и Intel | [PoFig-macOS.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.3/PoFig-macOS.zip) |
-| Windows x64 | [PoFig-win-x64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.3/PoFig-win-x64.zip) |
-| Windows ARM64 | [PoFig-win-arm64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.3/PoFig-win-arm64.zip) |
+| macOS 13+, Apple Silicon и Intel | [PoFig-macOS.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.4/PoFig-macOS.zip) |
+| Windows x64 | [PoFig-win-x64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.4/PoFig-win-x64.zip) |
+| Windows ARM64 | [PoFig-win-arm64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.4/PoFig-win-arm64.zip) |
 
 [Все выпуски и контрольные суммы](https://github.com/bogdanhpk/PoFig/releases). macOS-сборка пока имеет локальную подпись и не заверена Apple. Интерфейс Windows пока не проверен на Windows.
 
@@ -129,3 +129,5 @@ bash scripts/test-macos.sh
 Сборка и тесты сетевого модуля не подтверждают работу всех функций Figma с конкретным корпоративным прокси. Для этого нужны установленный клиент, вход в аккаунт и проверка рабочих сценариев на каждой ОС. Проверка Windows UI требует Windows.
 
 PoFig — независимое приложение. Figma — товарный знак Figma, Inc.
+
+Разработчик и создатель PoFig — **Богдан Хтоминский**. На macOS сведения об авторе доступны в меню **PoFig → О PoFig**, на Windows — в пункте **О PoFig** контекстного меню значка в трее.

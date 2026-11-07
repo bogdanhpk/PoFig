@@ -98,6 +98,7 @@ internal sealed class MainForm : Form
         trayMenu.Items.Add(trayStatus);
         trayMenu.Items.Add(new ToolStripSeparator());
         trayMenu.Items.Add("Показать PoFig", null, (_, _) => ShowSettings());
+        trayMenu.Items.Add("О PoFig", null, (_, _) => ShowAbout());
         trayMenu.Items.Add("Завершить PoFig", null, (_, _) => { exitRequested = true; Close(); });
         tray.Icon = Icon ?? SystemIcons.Application;
         tray.Text = "PoFig — настройки прокси";
@@ -134,6 +135,13 @@ internal sealed class MainForm : Form
         WindowState = FormWindowState.Normal;
         ShowInTaskbar = true;
         Show(); Activate();
+    }
+    private void ShowAbout()
+    {
+        ShowSettings();
+        string version = typeof(MainForm).Assembly.GetName().Version?.ToString(3) ?? "";
+        MessageBox.Show(this, $"PoFig {version}\n\nРазработчик и создатель\nБогдан Хтоминский\n\nPoFig — независимое приложение. Figma — товарный знак Figma, Inc.",
+            "О PoFig", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
     private void Reload()
     {

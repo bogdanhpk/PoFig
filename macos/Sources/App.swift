@@ -62,7 +62,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         let appItem = NSMenuItem()
         menu.addItem(appItem)
         appItem.submenu = appMenu
-        appMenu.addItem(withTitle: "О PoFig", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let about = appMenu.addItem(withTitle: "О PoFig", action: #selector(showAbout), keyEquivalent: "")
+        about.target = self
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Скрыть в строку меню", action: #selector(hideToTray), keyEquivalent: "h")
         appMenu.addItem(withTitle: "Завершить PoFig", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -78,6 +79,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         windowItem.submenu = windowMenu; menu.addItem(windowItem)
         windowMenu.addItem(withTitle: "Показать PoFig", action: #selector(showWindow), keyEquivalent: "0")
         NSApp.mainMenu = menu
+    }
+
+    @objc private func showAbout() {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        let credits = NSAttributedString(string: "Разработчик и создатель\nБогдан Хтоминский", attributes: [
+            .font: NSFont.systemFont(ofSize: 12), .paragraphStyle: paragraph
+        ])
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [.credits: credits]
+        if let url = Bundle.main.url(forResource: "PoFig", withExtension: "icns"), let icon = NSImage(contentsOf: url) {
+            options[.applicationIcon] = icon
+        }
+        NSApp.orderFrontStandardAboutPanel(options: options)
     }
 
     private func configureWindow() {
