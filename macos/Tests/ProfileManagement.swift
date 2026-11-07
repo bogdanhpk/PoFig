@@ -29,7 +29,7 @@ struct ProfileManagementTests {
         let delegate = AppDelegate(store: store, launcher: session)
         app.delegate = delegate
         delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
-        pump()
+        waitUntil("The settings window must appear") { app.windows.contains { $0.title == "PoFig" && $0.isVisible } }
         let window = app.windows.first { $0.title == "PoFig" }!
         let content = window.contentView!
         let table: NSTableView = view("proxyProfiles", in: content)
@@ -51,7 +51,7 @@ struct ProfileManagementTests {
         precondition(!launch.isEnabled, "Editing profiles must not allow a second Figma launch")
 
         edit.performClick(nil)
-        pump()
+        waitUntil("The editor must open during an active session") { window.attachedSheet != nil }
         let sheet = window.attachedSheet!
         let name: NSTextField = view("proxyName", in: sheet.contentView!)
         let host: NSTextField = view("proxyHost", in: sheet.contentView!)
@@ -60,42 +60,42 @@ struct ProfileManagementTests {
         name.stringValue = "Edited second"
         port.stringValue = "1080"
         button("Сохранить", in: sheet.contentView!).performClick(nil)
-        pump()
+        waitUntil("Saving must close the editor") { window.attachedSheet == nil }
         let updated = try ProfileStore(directory: directory).settings
         precondition(updated.profiles.count == 2 && updated.profiles[1].id == second.id)
         precondition(updated.profiles[1].name == "Edited second" && updated.profiles[1].port == 1080)
         precondition(updated.selectedID == second.id && table.selectedRow == 1, "Saving must preserve the edited selection")
 
         edit.performClick(nil)
-        pump()
+        waitUntil("The editor must reopen") { window.attachedSheet != nil }
         let cancelledSheet = window.attachedSheet!
         let cancelledName: NSTextField = view("proxyName", in: cancelledSheet.contentView!)
         cancelledName.stringValue = "Discard this change"
         button("Отмена", in: cancelledSheet.contentView!).performClick(nil)
-        pump()
+        waitUntil("Cancelling must close the editor") { window.attachedSheet == nil }
         let afterCancel = try ProfileStore(directory: directory).settings
         precondition(afterCancel.profiles[1].name == "Edited second")
 
         remove.performClick(nil)
-        pump()
+        waitUntil("Deletion must request confirmation") { window.attachedSheet != nil }
         button("Отмена", in: window.attachedSheet!.contentView!).performClick(nil)
-        pump()
+        waitUntil("Cancelling must close the confirmation") { window.attachedSheet == nil }
         let afterDeleteCancel = try ProfileStore(directory: directory).settings
         precondition(afterDeleteCancel.profiles.count == 2)
 
         remove.performClick(nil)
-        pump()
+        waitUntil("Deletion must request confirmation again") { window.attachedSheet != nil }
         button("Удалить прокси", in: window.attachedSheet!.contentView!).performClick(nil)
-        pump()
+        waitUntil("Confirmed deletion must close the confirmation") { window.attachedSheet == nil }
         let remaining = try ProfileStore(directory: directory).settings
         precondition(remaining.profiles.map(\.id) == [first.id] && remaining.selectedID == first.id)
         precondition(table.selectedRow == 0 && edit.isEnabled && remove.isEnabled)
         precondition(session.active && session.launches == 0, "Profile changes must not restart the running session")
 
         remove.performClick(nil)
-        pump()
+        waitUntil("Deleting the last profile must request confirmation") { window.attachedSheet != nil }
         button("Удалить прокси", in: window.attachedSheet!.contentView!).performClick(nil)
-        pump()
+        waitUntil("Deleting the last profile must close the confirmation") { window.attachedSheet == nil }
         let empty = try ProfileStore(directory: directory).settings
         precondition(empty.profiles.isEmpty)
         precondition(table.selectedRow == -1 && !edit.isEnabled && !remove.isEnabled)
@@ -105,7 +105,12 @@ struct ProfileManagementTests {
         withExtendedLifetime(delegate) {}
     }
 
-    private static func pump() { RunLoop.main.run(until: Date().addingTimeInterval(0.4)) }
+    private static func waitUntil(_ message: String, _ condition: () -> Bool) {
+        let deadline = Date().addingTimeInterval(5)
+        repeat { RunLoop.main.run(until: Date().addingTimeInterval(0.02)) }
+        while !condition() && Date() < deadline
+        precondition(condition(), message)
+    }
     private static func descendants(_ view: NSView) -> [NSView] { [view] + view.subviews.flatMap(descendants) }
     private static func view<T: NSView>(_ id: String, in root: NSView) -> T {
         descendants(root).first { $0.accessibilityIdentifier() == id } as! T
