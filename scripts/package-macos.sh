@@ -19,5 +19,6 @@ ditto "$app" "$stage/PoFig.app"
 cp macos/OPEN-FIRST.txt "$stage/OPEN-MAC-FIRST.txt"
 cp README.md "$stage/README.md"
 codesign --verify --deep --strict "$stage/PoFig.app"
+python3 scripts/update-manifest.py "$stage/PoFig.app" macos "$stage/PoFig-update.json"
 ditto -c -k --sequesterRsrc "$stage" "$archive"
 mv -f "$archive" build/PoFig-macOS.zip

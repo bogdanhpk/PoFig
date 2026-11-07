@@ -39,7 +39,7 @@ build/TrayLifecycle.app/Contents/MacOS/TrayLifecycle
 mkdir -p build/ProfileManagement.app/Contents/MacOS build/ProfileManagement.app/Contents/Resources
 swiftc -swift-version 5 -parse-as-library -module-cache-path "$PWD/build/swift-cache" \
   -framework AppKit -framework Security -framework UniformTypeIdentifiers \
-  macos/Sources/App.swift macos/Sources/AppIcon.swift macos/Sources/Profiles.swift macos/Sources/Bridge.swift \
+  macos/Sources/App.swift macos/Sources/Updates.swift macos/Sources/AppIcon.swift macos/Sources/Profiles.swift macos/Sources/Bridge.swift \
   macos/Sources/FigmaLauncher.swift macos/Sources/ProxyEditor.swift macos/Sources/TrayController.swift \
   macos/Tests/ProfileManagement.swift -o build/ProfileManagement.app/Contents/MacOS/ProfileManagement
 cp assets/PoFig-status.svg assets/PoFig.icns build/ProfileManagement.app/Contents/Resources/
@@ -53,3 +53,7 @@ Path('build/ProfileManagement.app/Contents/Info.plist').write_bytes(plistlib.dum
 }))
 PY
 build/ProfileManagement.app/Contents/MacOS/ProfileManagement
+swiftc -swift-version 5 -parse-as-library -module-cache-path "$PWD/build/swift-cache" \
+  -framework AppKit -framework Security macos/Sources/Profiles.swift macos/Sources/Updates.swift \
+  macos/Tests/UpdateFeedTests.swift -o build/test-updates
+build/test-updates

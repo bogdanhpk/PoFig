@@ -3,6 +3,8 @@ import AppKit
 final class TrayController: NSObject, NSWindowDelegate {
     private weak var window: NSWindow?
     let statusItem: NSStatusItem
+    var onUpdate: (() -> Void)?
+    private let updateItem = NSMenuItem(title: "Проверить обновления…", action: nil, keyEquivalent: "")
     private let statusLine = NSMenuItem(title: "Figma не запущена через PoFig", action: nil, keyEquivalent: "")
 
     init(window: NSWindow) {
@@ -30,9 +32,16 @@ final class TrayController: NSObject, NSWindowDelegate {
         let quit = NSMenuItem(title: "Завершить PoFig", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
         quit.target = NSApp
         menu.addItem(quit)
+        updateItem.target = self; updateItem.action = #selector(checkUpdates)
+        menu.addItem(updateItem)
         statusItem.menu = menu
     }
 
+    @objc private func checkUpdates() { onUpdate?() }
+    func updateAvailable(_ available: Bool, enabled: Bool) {
+        updateItem.title = available ? "Обновить PoFig…" : "Проверить обновления…"
+        updateItem.isEnabled = enabled
+    }
     func updateStatus(_ text: String) { statusLine.title = text }
 
     @objc func hideToTray() {

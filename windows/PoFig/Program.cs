@@ -11,7 +11,7 @@ internal static class Program
         using var showSettings = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\PoFig.ShowSettings");
         using var mutex = new Mutex(true, @"Local\PoFig.Desktop", out bool first);
         if (!first) { showSettings.Set(); return; }
-        try { Application.Run(new MainForm(showSettings)); }
+        try { if (!UpdateInstaller.Resume()) Application.Run(new MainForm(showSettings)); }
         catch (Exception ex) { MessageBox.Show(ex.Message, "PoFig", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
     }
 }
@@ -29,6 +29,9 @@ internal sealed class MainForm : Form
     private ProxyBridge? checker;
     private bool refreshing;
     private bool exitRequested;
+    private bool updateBusy, updateExit;
+    private readonly Button updates = new() { Text = "Обновления", AutoSize = true };
+    private readonly UpdateController updater;
     private readonly NotifyIcon tray = new();
     private readonly ToolStripMenuItem trayStatus = new("Figma не запущена через PoFig") { Enabled = false };
     private RegisteredWaitHandle? reopenListener;
@@ -36,6 +39,7 @@ internal sealed class MainForm : Form
 
     public MainForm(EventWaitHandle showSettings)
     {
+        updater = new UpdateController(this, () => !launcher.Active && !FigmaLauncher.Running(), () => { updateExit = true; exitRequested = true; Close(); });
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Text = "PoFig"; ClientSize = new Size(600, 440); MinimumSize = SizeFromClientSize(ClientSize);
         AutoScaleMode = AutoScaleMode.Dpi; StartPosition = FormStartPosition.CenterScreen;
@@ -72,7 +76,7 @@ internal sealed class MainForm : Form
             foreach (var label in new[] { subtitle, profileHint, status, note }) label.MaximumSize = new Size(width, 0);
         };
         var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
-        actions.Controls.AddRange([launch, test]); layout.Controls.Add(actions, 0, 8);
+        actions.Controls.AddRange([launch, test, updates]); layout.Controls.Add(actions, 0, 8);
         Controls.Add(layout); AcceptButton = launch;
         add.Click += (_, _) => Edit(new ProxyProfile());
         edit.Click += (_, _) => { if (Selected is { } profile) Edit(profile); };
@@ -98,6 +102,11 @@ internal sealed class MainForm : Form
         trayMenu.Items.Add(trayStatus);
         trayMenu.Items.Add(new ToolStripSeparator());
         trayMenu.Items.Add("Показать PoFig", null, (_, _) => ShowSettings());
+        var updateItem = new ToolStripMenuItem("Проверить обновления…", null, (_, _) => { ShowSettings(); updater.Selected(); });
+        trayMenu.Items.Add(updateItem);
+        updates.Click += (_, _) => updater.Selected();
+        updater.Changed += (title, enabled) => { updates.Text = title; updates.Enabled = enabled; updateItem.Text = title == "Обновить" ? "Обновить PoFig…" : "Проверить обновления…"; updateItem.Enabled = enabled; };
+        updater.Busy += busy => { updateBusy = busy; RefreshControls(); };
         trayMenu.Items.Add("О PoFig", null, (_, _) => ShowAbout());
         trayMenu.Items.Add("Завершить PoFig", null, (_, _) => { exitRequested = true; Close(); });
         tray.Icon = Icon ?? SystemIcons.Application;
@@ -108,6 +117,7 @@ internal sealed class MainForm : Form
         Resize += (_, _) => { if (WindowState == FormWindowState.Minimized) HideToTray(); };
         Shown += (_, _) =>
         {
+            updater.Start();
             reopenListener ??= ThreadPool.RegisterWaitForSingleObject(showSettings, (_, _) =>
             {
                 try { if (!IsDisposed && IsHandleCreated) BeginInvoke(new Action(() => { if (!IsDisposed) ShowSettings(); })); }
@@ -116,6 +126,7 @@ internal sealed class MainForm : Form
         };
         FormClosing += (_, e) =>
         {
+            if (updateBusy && !updateExit) { e.Cancel = true; return; }
             if (e.CloseReason == CloseReason.UserClosing && !exitRequested) { e.Cancel = true; HideToTray(); return; }
             if (launcher.Active && e.CloseReason != CloseReason.WindowsShutDown)
             {
@@ -123,7 +134,7 @@ internal sealed class MainForm : Form
                 MessageBox.Show(this, "Сначала закройте Figma. Пока она открыта, PoFig поддерживает её соединение с прокси.", "PoFig");
                 return;
             }
-            checker?.Dispose(); launcher.Dispose();
+            updater.Dispose(); checker?.Dispose(); launcher.Dispose();
             reopenListener?.Unregister(null);
             tray.Visible = false; tray.Dispose(); trayMenu.Dispose();
         };
@@ -155,9 +166,9 @@ internal sealed class MainForm : Form
     {
         bool selected = Selected != null;
         edit.Enabled = remove.Enabled = selected;
-        test.Enabled = selected && !launcher.Active;
+        test.Enabled = selected && !launcher.Active && !updateBusy;
         profileHint.Visible = launcher.Active;
-        launch.Enabled = selected && !launcher.Active && checker == null;
+        launch.Enabled = selected && !launcher.Active && checker == null && !updateBusy;
         appPath.Text = FigmaLauncher.Locate(store.Settings.FigmaPath) ?? "Figma не найдена. Установите официальный клиент.";
     }
     private void Edit(ProxyProfile profile)
@@ -210,6 +221,7 @@ internal sealed class MainForm : Form
     }
     private void Launch()
     {
+        if (updateBusy) return;
         if (Selected is not { } profile) return;
         string? executable = FigmaLauncher.Locate(store.Settings.FigmaPath);
         if (executable == null)

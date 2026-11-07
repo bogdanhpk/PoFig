@@ -9,6 +9,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     private var editor: ProxyEditor?
     private var checker: ProxyBridge?
     private var tray: TrayController?
+    private var updater: UpdateController?
+    private var updateBusy = false
+    private var updateExit = false
+    private let updatesEnabled: Bool
+    private let updateButton = NSButton(title: "Обновления", target: nil, action: nil)
+    private weak var updateMenuItem: NSMenuItem?
     private let table = NSTableView()
     private let statusLabel = NSTextField(wrappingLabelWithString: "Figma не запущена через PoFig")
     private let appLabel = NSTextField(labelWithString: "")
@@ -19,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     private let profileHint = NSTextField(wrappingLabelWithString: "Изменения профилей применятся при следующем запуске Figma.")
 
     init(store: ProfileStore? = nil, launcher: FigmaSession? = nil) {
+        self.updatesEnabled = store == nil && launcher == nil
         self.store = store
         self.launcher = launcher
         super.init()
@@ -46,6 +53,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         }
         configureWindow()
         tray = TrayController(window: window)
+        if updatesEnabled {
+            do {
+                if try UpdateInstaller.resume(directory: store.directory) { NSApp.terminate(nil); return }
+            } catch { DispatchQueue.main.async { [weak self] in self?.showError(error) } }
+            let updater = UpdateController(window: window, directory: store.directory) { [weak self] in
+                self?.launcher.active == false && !FigmaLauncher.running
+            }
+            self.updater = updater
+            updater.onChange = { [weak self] title, enabled in
+                self?.updateButton.title = title; self?.updateButton.isEnabled = enabled
+                self?.updateMenuItem?.title = title == "Обновить" ? "Обновить PoFig…" : "Проверить обновления…"
+                self?.updateMenuItem?.isEnabled = enabled
+                self?.tray?.updateAvailable(title == "Обновить", enabled: enabled)
+            }
+            updater.onBusy = { [weak self] busy in self?.updateBusy = busy; self?.refreshControls() }
+            updater.onInstall = { [weak self] in self?.updateExit = true; NSApp.terminate(nil) }
+            tray?.onUpdate = { [weak self] in self?.checkForUpdates() }
+        }
         launcher.onStatus = { [weak self] text, _ in
             self?.statusLabel.stringValue = text
             self?.tray?.updateStatus(text)
@@ -56,6 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         launcher.onError = { [weak self] error in self?.showError(error) }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        updater?.start()
     }
 
     private func configureMenu() {
@@ -65,6 +91,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         appItem.submenu = appMenu
         let about = appMenu.addItem(withTitle: "О PoFig", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
+        let updates = appMenu.addItem(withTitle: "Проверить обновления…", action: #selector(checkForUpdates), keyEquivalent: "")
+        updates.target = self; updateMenuItem = updates
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Скрыть в строку меню", action: #selector(hideToTray), keyEquivalent: "h")
         appMenu.addItem(withTitle: "Завершить PoFig", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -150,7 +178,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         launchButton.target = self; launchButton.action = #selector(launchFigma)
         launchButton.keyEquivalent = "\r"
         launchButton.setAccessibilityIdentifier("launchFigma")
-        let actions = NSStackView(views: [testButton, launchButton])
+        updateButton.target = self; updateButton.action = #selector(checkForUpdates)
+        updateButton.setAccessibilityIdentifier("checkForUpdates")
+        let actions = NSStackView(views: [updateButton, testButton, launchButton])
         actions.spacing = 8
         let body = NSStackView(views: [heading, subtitle, scroll, tools, profileHint, statusLabel, appRow, note])
         body.orientation = .vertical
@@ -194,8 +224,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         editButton.isEnabled = hasProfile
         removeButton.isEnabled = hasProfile
         profileHint.isHidden = !active
-        testButton.isEnabled = hasProfile && !active
-        launchButton.isEnabled = hasProfile && !active && checker == nil
+        testButton.isEnabled = hasProfile && !active && !updateBusy
+        launchButton.isEnabled = hasProfile && !active && checker == nil && !updateBusy
         appLabel.stringValue = launcher.locate(savedPath: store.settings.figmaPath)?.path ?? "Figma не найдена. Установите официальный клиент."
     }
 
@@ -305,6 +335,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         refreshControls()
     }
     @objc private func launchFigma() {
+        guard !updateBusy else { return }
         guard let selected else { return }
         guard let url = launcher.locate(savedPath: store.settings.figmaPath) else {
             let alert = NSAlert()
@@ -317,16 +348,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         do { try launcher.launch(profile: selected, password: try Secrets.read(selected.id), appURL: url); refreshControls() }
         catch { showError(error) }
     }
+    @objc private func checkForUpdates() { showWindow(); updater?.selected() }
     @objc private func hideToTray() { tray?.hideToTray() }
     @objc private func showWindow() { tray?.showWindow() }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { showWindow(); return true }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if updateBusy && !updateExit { return .terminateCancel }
         if launcher?.active == true && FigmaLauncher.running {
             showWindow()
             showError(PoFigError("Сначала закройте Figma через ⌘Q. Пока Figma открыта, PoFig поддерживает её соединение с прокси."))
             return .terminateCancel
         }
+        updater?.stop()
         launcher?.finish()
         checker?.stop()
         return .terminateNow

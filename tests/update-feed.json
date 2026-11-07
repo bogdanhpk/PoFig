@@ -1,0 +1,114 @@
+[
+  {
+    "tag_name": "v0.3.0",
+    "draft": false,
+    "prerelease": true,
+    "assets": [
+      {
+        "name": "PoFig-macOS.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.3.0/PoFig-macOS.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-x64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.3.0/PoFig-win-x64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-arm64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.3.0/PoFig-win-arm64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  },
+  {
+    "tag_name": "v0.10.0",
+    "draft": false,
+    "prerelease": true,
+    "assets": [
+      {
+        "name": "PoFig-macOS.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.10.0/PoFig-macOS.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-x64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.10.0/PoFig-win-x64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-arm64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.10.0/PoFig-win-arm64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  },
+  {
+    "tag_name": "v8.0.0",
+    "draft": true,
+    "prerelease": true,
+    "assets": [
+      {
+        "name": "PoFig-macOS.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v8.0.0/PoFig-macOS.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-x64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v8.0.0/PoFig-win-x64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-arm64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v8.0.0/PoFig-win-arm64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  },
+  {
+    "tag_name": "v0.2.0",
+    "draft": false,
+    "prerelease": true,
+    "assets": [
+      {
+        "name": "PoFig-macOS.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.2.0/PoFig-macOS.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-x64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.2.0/PoFig-win-x64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "name": "PoFig-win-arm64.zip",
+        "browser_download_url": "https://github.com/bogdanhpk/PoFig/releases/download/v0.2.0/PoFig-win-arm64.zip",
+        "size": 1234,
+        "state": "uploaded",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  }
+]

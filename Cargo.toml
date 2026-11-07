@@ -1,6 +1,6 @@
 [package]
 name = "pofig-proxy"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MIT"
 description = "Loopback proxy bridge for the native PoFig launcher"
@@ -8,6 +8,10 @@ description = "Loopback proxy bridge for the native PoFig launcher"
 [[bin]]
 name = "pofig-proxy"
 path = "proxy/src/main.rs"
+
+[[bin]]
+name = "pofig-updater"
+path = "updater/src/main.rs"
 
 [dependencies]
 base64 = "0.22.1"
@@ -18,6 +22,11 @@ rustls = { version = "0.23.40", default-features = false, features = ["ring", "s
 tokio-rustls = { version = "0.26.4", default-features = false, features = ["ring", "tls12"] }
 rustls-platform-verifier = "0.7.0"
 url = "2.5.8"
+ring = "0.17.14"
+zip = { version = "9.4.1", default-features = false, features = ["deflate"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.191"
 
 [dev-dependencies]
 rcgen = { version = "0.14.10", default-features = false, features = ["crypto", "ring"] }

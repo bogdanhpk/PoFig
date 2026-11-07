@@ -19,8 +19,10 @@ finally {
 $destination = Join-Path $PWD "build/PoFig-$Runtime"
 dotnet publish windows/PoFig/PoFig.csproj -c Release -r $Runtime --self-contained true -o $destination
 if ($LASTEXITCODE -ne 0) { throw "Windows build failed" }
-Copy-Item "target/$target/release/pofig-proxy.exe" $destination
+Copy-Item "target/$target/release/pofig-proxy.exe", "target/$target/release/pofig-updater.exe" $destination
 python scripts/collect-rust-licenses.py
 if ($LASTEXITCODE -ne 0) { throw "Could not collect dependency notices" }
 Copy-Item README.md, LICENSE, build/RustThirdPartyNotices.txt $destination
+python scripts/update-manifest.py $destination windows "$destination/PoFig-update.json"
+if ($LASTEXITCODE -ne 0) { throw "Could not create update manifest" }
 Compress-Archive -Path "$destination/*" -DestinationPath "build/PoFig-$Runtime.zip" -Force

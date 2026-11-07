@@ -14,6 +14,7 @@ elif [ -n "${1:-}" ]; then
 fi
 app_binaries=()
 proxy_binaries=()
+updater_binaries=()
 for architecture in "${architectures[@]}"; do
   rust_architecture="$architecture"
   if [ "$architecture" = "arm64" ]; then rust_architecture=aarch64; fi
@@ -25,9 +26,11 @@ for architecture in "${architectures[@]}"; do
     macos/Sources/*.swift -o "build/macos-$architecture/PoFig"
   app_binaries+=("build/macos-$architecture/PoFig")
   proxy_binaries+=("target/$target/release/pofig-proxy")
+  updater_binaries+=("target/$target/release/pofig-updater")
 done
 lipo -create "${app_binaries[@]}" -output build/PoFig.app/Contents/MacOS/PoFig
 lipo -create "${proxy_binaries[@]}" -output build/PoFig.app/Contents/MacOS/pofig-proxy
+lipo -create "${updater_binaries[@]}" -output build/PoFig.app/Contents/MacOS/pofig-updater
 cp macos/Info.plist build/PoFig.app/Contents/Info.plist
 cp assets/PoFig.icns build/PoFig.app/Contents/Resources/
 cp assets/PoFig-status.svg build/PoFig.app/Contents/Resources/
@@ -35,5 +38,6 @@ cp README.md LICENSE build/PoFig.app/Contents/Resources/
 python3 scripts/collect-rust-licenses.py
 cp build/RustThirdPartyNotices.txt build/PoFig.app/Contents/Resources/
 codesign --force --sign - build/PoFig.app/Contents/MacOS/pofig-proxy
+codesign --force --sign - build/PoFig.app/Contents/MacOS/pofig-updater
 codesign --force --sign - build/PoFig.app
 bash scripts/package-macos.sh
