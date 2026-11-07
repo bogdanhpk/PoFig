@@ -46,6 +46,7 @@ protocol FigmaSession: AnyObject {
     var onStatus: ((String, Bool) -> Void)? { get set }
     var onError: ((Error) -> Void)? { get set }
     var onLaunched: (() -> Void)? { get set }
+    var onClosed: (() -> Void)? { get set }
     func recover() throws
     func locate(savedPath: String?) -> URL?
     func launch(profile: ProxyProfile, password: String, appURL: URL) throws
@@ -64,6 +65,7 @@ final class FigmaLauncher: FigmaSession {
     var onStatus: ((String, Bool) -> Void)?
     var onError: ((Error) -> Void)?
     var onLaunched: (() -> Void)?
+    var onClosed: (() -> Void)?
 
     init(directory: URL) { preference = FigmaProxyPreference(directory: directory) }
     static var running: Bool { !NSRunningApplication.runningApplications(withBundleIdentifier: "com.figma.Desktop").isEmpty }
@@ -112,7 +114,7 @@ final class FigmaLauncher: FigmaSession {
                             self.observer = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] note in
                                 guard let self, let exited = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                                       exited.processIdentifier == self.application?.processIdentifier else { return }
-                                self.finish()
+                                self.figmaDidClose()
                             }
                             self.observeReadiness(app, profileName: profile.name)
                         }
@@ -142,7 +144,7 @@ final class FigmaLauncher: FigmaSession {
     }
     private func announceReadiness(_ app: NSRunningApplication, profileName: String) {
         guard active, !launchAnnounced else { return }
-        if app.isTerminated { finish(); return }
+        if app.isTerminated { figmaDidClose(); return }
         guard app.isFinishedLaunching else { return }
         launchAnnounced = true
         readinessTimer?.invalidate(); readinessTimer = nil
@@ -150,7 +152,13 @@ final class FigmaLauncher: FigmaSession {
         onStatus?("Figma запущена через \(profileName)", true)
         onLaunched?()
     }
+    private func figmaDidClose() {
+        guard active else { return }
+        finish()
+        onClosed?()
+    }
     func finish() {
+        active = false
         readinessTimer?.invalidate(); readinessTimer = nil
         launchAnnounced = false
         startupTimeout?.cancel(); startupTimeout = nil
@@ -158,7 +166,6 @@ final class FigmaLauncher: FigmaSession {
         observer = nil
         bridge?.stop(); bridge = nil
         application = nil
-        active = false
         do { try preference.restore() } catch { onError?(error) }
         onStatus?("Figma не запущена через PoFig", false)
     }

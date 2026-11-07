@@ -92,6 +92,7 @@ internal sealed class MainForm : Form
         choose.Click += (_, _) => ChooseFigma(); test.Click += (_, _) => Check(); launch.Click += (_, _) => Launch();
         launcher.Status += text => { status.Text = text; trayStatus.Text = text; RefreshControls(); };
         launcher.Launched += HideToTray;
+        launcher.Closed += ShowSettings;
         launcher.Error += Error;
         var trayMenu = new ContextMenuStrip();
         trayMenu.Items.Add(trayStatus);

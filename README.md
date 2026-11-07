@@ -10,9 +10,9 @@ PoFig сохраняет профили прокси и запускает ус�
 
 | Платформа | Архив |
 | --- | --- |
-| macOS 13+, Apple Silicon и Intel | [PoFig-macOS.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.2/PoFig-macOS.zip) |
-| Windows x64 | [PoFig-win-x64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.2/PoFig-win-x64.zip) |
-| Windows ARM64 | [PoFig-win-arm64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.2/PoFig-win-arm64.zip) |
+| macOS 13+, Apple Silicon и Intel | [PoFig-macOS.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.3/PoFig-macOS.zip) |
+| Windows x64 | [PoFig-win-x64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.3/PoFig-win-x64.zip) |
+| Windows ARM64 | [PoFig-win-arm64.zip](https://github.com/bogdanhpk/PoFig/releases/download/v0.1.3/PoFig-win-arm64.zip) |
 
 [Все выпуски и контрольные суммы](https://github.com/bogdanhpk/PoFig/releases). macOS-сборка пока имеет локальную подпись и не заверена Apple. Интерфейс Windows пока не проверен на Windows.
 
@@ -25,7 +25,9 @@ PoFig сохраняет профили прокси и запускает ус�
 5. Полностью закройте уже открытую Figma. Нажмите **«Запустить Figma»** в PoFig.
 6. После успешного запуска Figma PoFig автоматически скроется в фон. На macOS значок останется в верхней строке меню, на Windows — в трее. Окно PoFig и его значок в Dock или на панели задач будут скрыты; прокси продолжит работать.
 
-Чтобы вернуться к настройкам, нажмите значок PoFig и выберите **«Показать PoFig»**. На Windows также можно дважды нажать значок в трее или ещё раз запустить `PoFig.exe`. Закрытие окна скрывает PoFig в фон. Для полного выхода выберите **«Завершить PoFig»** в меню значка после закрытия Figma.
+После полного выхода из Figma окно PoFig автоматически появится на переднем плане; значок вернётся в Dock или на панель задач. Выбранный прокси сохранится, и Figma можно будет запустить снова. На Mac выходите из Figma через **⌘Q**: красная кнопка закрытия окна может оставить приложение работающим.
+
+Чтобы вернуться к настройкам во время работы Figma, нажмите значок PoFig и выберите **«Показать PoFig»**. На Windows также можно дважды нажать значок в трее или ещё раз запустить `PoFig.exe`. Закрытие окна скрывает PoFig в фон. Для полного выхода выберите **«Завершить PoFig»** в меню значка после закрытия Figma.
 
 Чтобы изменить сохранённый прокси, дважды нажмите на его строку или выберите её и нажмите **«Изменить прокси…»**. Для удаления выберите строку, нажмите **«Удалить прокси…»** и подтвердите удаление. Эти действия доступны и во время работы Figma. Изменения применятся при следующем запуске Figma через PoFig; текущее соединение продолжит работать с прежними настройками.
 

@@ -51,6 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
             self?.refreshControls()
         }
         launcher.onLaunched = { [weak self] in self?.tray?.hideToTray() }
+        launcher.onClosed = { [weak self] in self?.tray?.showWindow() }
         launcher.onError = { [weak self] error in self?.showError(error) }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

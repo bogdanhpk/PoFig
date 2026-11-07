@@ -5,6 +5,7 @@ private final class TestSession: FigmaSession {
     var onStatus: ((String, Bool) -> Void)?
     var onError: ((Error) -> Void)?
     var onLaunched: (() -> Void)?
+    var onClosed: (() -> Void)?
     var launches = 0
     func recover() throws {}
     func locate(savedPath: String?) -> URL? { nil }
@@ -61,8 +62,21 @@ struct ProfileManagementTests {
 
         session.active = true
         session.onStatus?("Figma запущена через Second", true)
-        precondition(edit.isEnabled && remove.isEnabled, "A running session must not lock saved profiles")
+        session.onLaunched?()
+        try await waitUntil("Launching Figma must hide settings") { !window.isVisible && app.activationPolicy() == .accessory }
+        session.active = false
+        session.onStatus?("Figma не запущена через PoFig", false)
+        precondition(!window.isVisible, "Status updates alone must not show a manually hidden window")
+        session.onClosed?()
+        try await waitUntil("Closing Figma must restore settings and Dock visibility") {
+            window.isVisible && app.activationPolicy() == .regular
+        }
         let launch: NSButton = view("launchFigma", in: content)
+        precondition(launch.isEnabled && table.selectedRow == 1, "Closing Figma must enable relaunch and preserve the selected proxy")
+
+        session.active = true
+        session.onStatus?("Figma запущена через Second", true)
+        precondition(edit.isEnabled && remove.isEnabled, "A running session must not lock saved profiles")
         precondition(!launch.isEnabled, "Editing profiles must not allow a second Figma launch")
 
         edit.performClick(nil)
@@ -116,7 +130,7 @@ struct ProfileManagementTests {
         precondition(table.selectedRow == -1 && !edit.isEnabled && !remove.isEnabled)
         window.orderOut(nil)
         app.setActivationPolicy(.accessory)
-        print("Profile management: edit during session, persistence, selection, cancel, delete confirmation and empty state verified")
+        print("Profile management: auto-hide on launch, auto-restore on Figma exit, relaunch, edit, selection, cancel and deletion verified")
     }
 
     @MainActor

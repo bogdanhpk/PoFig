@@ -14,11 +14,20 @@ internal sealed class FigmaLauncher : IDisposable
     public event Action<string>? Status;
     public event Action<Exception>? Error;
     public event Action? Launched;
+    public event Action? Closed;
 
     public static bool Running()
     {
         var processes = Process.GetProcessesByName("Figma");
-        try { return processes.Any(p => !p.HasExited); }
+        try
+        {
+            foreach (var process in processes)
+            {
+                try { if (!process.HasExited) return true; }
+                catch (InvalidOperationException) { }
+            }
+            return false;
+        }
         finally { foreach (var process in processes) process.Dispose(); }
     }
     public static string? Locate(string? savedPath)
@@ -37,11 +46,12 @@ internal sealed class FigmaLauncher : IDisposable
     {
         monitor.Tick += (_, _) =>
         {
+            if (!Active) return;
             try
             {
                 bool running = Running();
                 if (running) seenProcess = true;
-                if (seenProcess && !running) { Dispose(); return; }
+                if (seenProcess && !running) { Dispose(); Closed?.Invoke(); return; }
                 if (Active && !launchAnnounced && HasWindow())
                 {
                     launchAnnounced = true;
@@ -101,7 +111,8 @@ internal sealed class FigmaLauncher : IDisposable
     private void Fail(Exception error) { Dispose(); Error?.Invoke(error); }
     public void Dispose()
     {
-        monitor.Stop(); bridge?.Dispose(); bridge = null; Active = false;
+        Active = false; seenProcess = false; launchAnnounced = false;
+        monitor.Stop(); bridge?.Dispose(); bridge = null;
         Status?.Invoke("Figma не запущена через PoFig");
     }
 }
