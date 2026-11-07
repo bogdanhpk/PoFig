@@ -145,6 +145,23 @@ struct UpdateInstaller {
             }
         }
     }
+    // Carry the system's download metadata across archive extraction.
+    static func preserveQuarantine(from sources: [URL], to target: URL) throws {
+        for source in sources {
+            let size = getxattr(source.path, "com.apple.quarantine", nil, 0, 0, 0)
+            if size < 0 {
+                if errno == ENOATTR { continue }
+                throw PoFigError("Не удалось перенести системные сведения об обновлении. Скачайте новую версию со страницы PoFig.")
+            }
+            guard size > 0, size < 65536 else { continue }
+            var data = [UInt8](repeating: 0, count: size)
+            guard getxattr(source.path, "com.apple.quarantine", &data, size, 0, 0) == size,
+                  setxattr(target.path, "com.apple.quarantine", data, size, 0, 0) == 0 else {
+                throw PoFigError("Не удалось подготовить приложение к открытию. Скачайте новую версию со страницы PoFig.")
+            }
+            return
+        }
+    }
     static func write(_ object: Any, to path: URL) throws { try JSONSerialization.data(withJSONObject: object).write(to: path, options: .atomic) }
     static func resume(directory: URL) throws -> Bool {
         let updates = directory.appendingPathComponent("Updates", isDirectory: true)
@@ -281,6 +298,7 @@ final class UpdateController: NSObject {
                   let bundle = Bundle(path: root), bundle.bundleIdentifier == "app.pofig.desktop", bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String == release.version else { throw PoFigError("Загружен неподходящий пакет обновления.") }
             try await UpdateInstaller.command("/usr/bin/codesign", ["--verify", "--deep", "--strict", root])
             try FileManager.default.copyItem(at: URL(fileURLWithPath: root), to: stage)
+            try UpdateInstaller.preserveQuarantine(from: [archive, target], to: stage)
             guard canInstall() else { throw PoFigError("Figma была открыта во время загрузки. Закройте её и повторите обновление.") }
             let job = workspace.appendingPathComponent("install.json")
             try UpdateInstaller.write(["id": id, "target": target.path, "stage": stage.path, "manifest": manifest, "manifest_sha256": hash,
