@@ -32,7 +32,7 @@ lipo -create "${app_binaries[@]}" -output build/PoFig.app/Contents/MacOS/PoFig
 lipo -create "${proxy_binaries[@]}" -output build/PoFig.app/Contents/MacOS/pofig-proxy
 lipo -create "${updater_binaries[@]}" -output build/PoFig.app/Contents/MacOS/pofig-updater
 cp macos/Info.plist build/PoFig.app/Contents/Info.plist
-cp assets/PoFig.icns build/PoFig.app/Contents/Resources/
+cp assets/PoFig.icns assets/PoFig.png build/PoFig.app/Contents/Resources/
 cp assets/PoFig-status.svg build/PoFig.app/Contents/Resources/
 cp README.md LICENSE build/PoFig.app/Contents/Resources/
 python3 scripts/collect-rust-licenses.py

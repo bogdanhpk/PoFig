@@ -12,7 +12,7 @@ internal static class Program
         using var mutex = new Mutex(true, @"Local\PoFig.Desktop", out bool first);
         if (!first) { showSettings.Set(); return; }
         try { if (!UpdateInstaller.Resume()) Application.Run(new MainForm(showSettings)); }
-        catch (Exception ex) { MessageBox.Show(ex.Message, "PoFig", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        catch (Exception ex) { AppDialog.Show(ex.Message); }
     }
 }
 
@@ -40,7 +40,7 @@ internal sealed class MainForm : Form
     public MainForm(EventWaitHandle showSettings)
     {
         updater = new UpdateController(this, () => !launcher.Active && !FigmaLauncher.Running(), () => { updateExit = true; exitRequested = true; Close(); });
-        Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        AppIcon.Apply(this);
         Text = "PoFig"; ClientSize = new Size(600, 440); MinimumSize = SizeFromClientSize(ClientSize);
         AutoScaleMode = AutoScaleMode.Dpi; StartPosition = FormStartPosition.CenterScreen;
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 9, AutoScroll = true };
@@ -109,7 +109,7 @@ internal sealed class MainForm : Form
         updater.Busy += busy => { updateBusy = busy; RefreshControls(); };
         trayMenu.Items.Add("О PoFig", null, (_, _) => ShowAbout());
         trayMenu.Items.Add("Завершить PoFig", null, (_, _) => { exitRequested = true; Close(); });
-        tray.Icon = Icon ?? SystemIcons.Application;
+        tray.Icon = AppIcon.Image;
         tray.Text = "PoFig — настройки прокси";
         tray.ContextMenuStrip = trayMenu;
         tray.DoubleClick += (_, _) => ShowSettings();
@@ -131,7 +131,7 @@ internal sealed class MainForm : Form
             if (launcher.Active && e.CloseReason != CloseReason.WindowsShutDown)
             {
                 e.Cancel = true; exitRequested = false; ShowSettings();
-                MessageBox.Show(this, "Сначала закройте Figma. Пока она открыта, PoFig поддерживает её соединение с прокси.", "PoFig");
+                AppDialog.Show("Сначала закройте Figma. Пока она открыта, PoFig поддерживает её соединение с прокси.", owner: this);
                 return;
             }
             updater.Dispose(); checker?.Dispose(); launcher.Dispose();
@@ -151,8 +151,7 @@ internal sealed class MainForm : Form
     {
         ShowSettings();
         string version = typeof(MainForm).Assembly.GetName().Version?.ToString(3) ?? "";
-        MessageBox.Show(this, $"PoFig {version}\n\nРазработчик и создатель\nБогдан Хтоминский\n\nPoFig — независимое приложение. Figma — товарный знак Figma, Inc.",
-            "О PoFig", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        AppDialog.Show($"PoFig {version}\n\nРазработчик и создатель\nБогдан Хтоминский\n\nPoFig — независимое приложение. Figma — товарный знак Figma, Inc.", "О PoFig", this);
     }
     private void Reload()
     {
@@ -180,8 +179,8 @@ internal sealed class MainForm : Form
     private void RemoveSelected()
     {
         if (Selected is not { } profile) return;
-        if (MessageBox.Show(this, $"Удалить прокси «{profile.Name}» и его сохранённый пароль?\n\nОткрытая Figma продолжит работу с текущими настройками.",
-            "Удалить прокси", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+        if (!AppDialog.Confirm($"Удалить прокси «{profile.Name}» и его сохранённый пароль?\n\nОткрытая Figma продолжит работу с текущими настройками.",
+            "Удалить прокси", this, defaultAccept: false)) return;
         Try(() => { CancelCheck(); store.Remove(profile); Reload(); });
     }
     private void ChooseFigma()
@@ -226,7 +225,7 @@ internal sealed class MainForm : Form
         string? executable = FigmaLauncher.Locate(store.Settings.FigmaPath);
         if (executable == null)
         {
-            if (MessageBox.Show(this, "PoFig запускает официальный клиент Figma. Открыть страницу загрузки?", "Установите Figma", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (AppDialog.Confirm("PoFig запускает официальный клиент Figma. Открыть страницу загрузки?", "Установите Figma", this))
                 Process.Start(new ProcessStartInfo("https://www.figma.com/downloads/") { UseShellExecute = true });
             return;
         }
@@ -236,6 +235,6 @@ internal sealed class MainForm : Form
     private void Error(Exception error)
     {
         ShowSettings();
-        MessageBox.Show(this, error.Message, "PoFig", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        AppDialog.Show(error.Message, owner: this);
     }
 }

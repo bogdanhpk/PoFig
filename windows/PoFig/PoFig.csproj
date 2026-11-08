@@ -8,11 +8,15 @@
     <Nullable>enable</Nullable>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyName>PoFig</AssemblyName>
-    <Version>0.2.2</Version>
+    <Version>0.2.3</Version>
     <Authors>Богдан Хтоминский</Authors>
     <Company>PoFig</Company>
     <Description>Native proxy settings and launcher for the official Figma client</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>../../assets/PoFig.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../assets/PoFig.ico" LogicalName="PoFig.ProductIcon" />
+    <InternalsVisibleTo Include="PoFig.BrandingTests" />
+  </ItemGroup>
 </Project>

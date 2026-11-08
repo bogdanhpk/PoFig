@@ -54,6 +54,6 @@ Path('build/ProfileManagement.app/Contents/Info.plist').write_bytes(plistlib.dum
 PY
 build/ProfileManagement.app/Contents/MacOS/ProfileManagement
 swiftc -swift-version 5 -parse-as-library -module-cache-path "$PWD/build/swift-cache" \
-  -framework AppKit -framework Security macos/Sources/Profiles.swift macos/Sources/Updates.swift \
+  -framework AppKit -framework Security macos/Sources/Profiles.swift macos/Sources/Updates.swift macos/Sources/AppIcon.swift \
   macos/Tests/UpdateFeedTests.swift -o build/test-updates
 build/test-updates

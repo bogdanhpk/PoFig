@@ -39,6 +39,8 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet run --project windows/UpdateTests/UpdateTests.csproj
+      - run: dotnet run --project windows/BrandingTests/BrandingTests.csproj
+        timeout-minutes: 2
       - run: ./scripts/build-windows.ps1 -Runtime ${{ matrix.runtime }}
         shell: pwsh
       - if: matrix.runtime == 'win-x64'

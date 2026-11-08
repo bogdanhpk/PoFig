@@ -7,6 +7,13 @@ struct TrayLifecycleTests {
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
         app.finishLaunching()
+        guard let product = AppIcon.image, let expectedIcon = product.tiffRepresentation else { fatalError("Missing product icon") }
+        // Alerts must not inherit the cached system icon reported in update dialogs.
+        app.applicationIconImage = NSImage(systemSymbolName: "app", accessibilityDescription: nil)
+        for style: NSAlert.Style? in [nil, .informational, .warning, .critical] {
+            let alert = AppIcon.alert(style: style)
+            precondition(alert.icon.tiffRepresentation == expectedIcon, "Every alert style must show the bundled product icon")
+        }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 180), styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "PoFig tray test"
         window.isReleasedWhenClosed = false
@@ -14,6 +21,8 @@ struct TrayLifecycleTests {
         tray.showWindow()
         pump()
         precondition(window.isVisible && app.activationPolicy() == .regular)
+        precondition(isProductIcon(app.applicationIconImage), "Restoring the window must restore the product Dock icon")
+        precondition(tray.statusItem.button?.image?.isTemplate == true, "The menu bar must use the product's native template icon")
 
         let bridge = ProxyBridge()
         var port: UInt16?
@@ -42,7 +51,25 @@ struct TrayLifecycleTests {
         bridge.stop()
         window.orderOut(nil)
         app.setActivationPolicy(.accessory)
+        print("Branding: bundled icon in all alert styles, Dock and menu bar verified")
         print("Tray lifecycle: close-to-tray, Dock policy, menu access, restore and live proxy verified")
+    }
+
+    private static func isProductIcon(_ image: NSImage?) -> Bool {
+        guard let image, let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 32, pixelsHigh: 32,
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0), let context = NSGraphicsContext(bitmapImageRep: bitmap) else { return false }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        image.draw(in: NSRect(x: 0, y: 0, width: 32, height: 32))
+        NSGraphicsContext.restoreGraphicsState()
+        var red = 0
+        for y in 0..<32 { for x in 0..<32 {
+            if let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
+               color.alphaComponent > 0.5, color.redComponent > color.greenComponent * 1.2,
+               color.redComponent > color.blueComponent * 1.2 { red += 1 }
+        } }
+        return red > 50
     }
 
     private static func pump() { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }

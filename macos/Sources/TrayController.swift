@@ -12,12 +12,7 @@ final class TrayController: NSObject, NSWindowDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         window.delegate = self
-        let icon = Bundle.main.url(forResource: "PoFig-status", withExtension: "svg")
-            .flatMap { NSImage(contentsOf: $0) }
-            ?? NSImage(systemSymbolName: "network", accessibilityDescription: "PoFig")
-        icon?.size = NSSize(width: 16, height: 18)
-        icon?.isTemplate = true
-        statusItem.button?.image = icon
+        statusItem.button?.image = AppIcon.menuBarImage()
         statusItem.button?.toolTip = "PoFig — настройки прокси"
         statusItem.button?.setAccessibilityLabel("PoFig — настройки прокси")
         statusItem.button?.setAccessibilityIdentifier("pofigStatusItem")

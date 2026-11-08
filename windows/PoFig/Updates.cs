@@ -24,7 +24,7 @@ internal static class UpdateInstaller
             using var json = JsonDocument.Parse(File.ReadAllText(result));
             File.Delete(Marker);
             if (json.RootElement.GetProperty("status").GetString() == "recovery_failed") throw new InvalidOperationException("Не удалось завершить обновление. Скачайте PoFig заново. Ваши прокси и пароли сохранены.");
-            if (json.RootElement.GetProperty("status").GetString() != "installed") MessageBox.Show("Обновление не установлено. Предыдущая версия восстановлена. Повторите попытку позже.", "PoFig");
+            if (json.RootElement.GetProperty("status").GetString() != "installed") AppDialog.Show("Обновление не установлено. Предыдущая версия восстановлена. Повторите попытку позже.");
             else _ = Task.Run(async () => { await Task.Delay(5000); try { Directory.Delete(workspace, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } });
             return false;
         }
@@ -93,18 +93,18 @@ internal sealed class UpdateController : IDisposable
             string data = await transport.Catalog(timeout.Token);
             release = UpdateRelease.Latest(data, typeof(UpdateController).Assembly.GetName().Version!.ToString(3));
             if (release != null) Offer(manual);
-            else if (manual) MessageBox.Show(owner, "У вас последняя версия PoFig.", "Обновления", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            else if (manual) AppDialog.Show("У вас последняя версия PoFig.", "Обновления", owner);
         }
-        catch { if (manual) MessageBox.Show(owner, "Не удалось проверить обновления. Проверьте подключение к интернету и повторите попытку.", "PoFig"); }
+        catch { if (manual) AppDialog.Show("Не удалось проверить обновления. Проверьте подключение к интернету и повторите попытку.", owner: owner); }
         finally { checking = false; Changed?.Invoke(release == null ? "Обновления" : "Обновить", true); }
     }
     public async void Offer(bool manual = false)
     {
         if (busy || release == null || !owner.Enabled || owner.OwnedForms.Length > 0) return;
         if (!manual && (!owner.Visible || !canInstall() || dismissed == release.Version)) return;
-        if (!canInstall()) { MessageBox.Show(owner, "Сначала закройте Figma, затем нажмите «Обновить» ещё раз.", "PoFig"); return; }
+        if (!canInstall()) { AppDialog.Show("Сначала закройте Figma, затем нажмите «Обновить» ещё раз.", owner: owner); return; }
         var candidate = release; dismissed = candidate.Version;
-        if (MessageBox.Show(owner, $"Установить PoFig {candidate.Version} и перезапустить приложение?\n\nВаши прокси и пароли сохранятся.", "Обновление PoFig", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes) await Install(candidate);
+        if (AppDialog.Confirm($"Установить PoFig {candidate.Version} и перезапустить приложение?\n\nВаши прокси и пароли сохранятся.", "Обновление PoFig", owner)) await Install(candidate);
     }
     private async Task Install(UpdateRelease candidate)
     {
@@ -114,6 +114,7 @@ internal sealed class UpdateController : IDisposable
         bool handedOff = false;
         int workerPid = 0;
         using var dialog = new Form { Text = "Обновление PoFig", ClientSize = new Size(380, 124), FormBorderStyle = FormBorderStyle.FixedDialog, StartPosition = FormStartPosition.CenterParent, ControlBox = false, ShowInTaskbar = false };
+        AppIcon.Apply(dialog);
         var text = new Label { Text = "Скачиваем обновление…", Location = new Point(20, 18), AutoSize = true };
         var progress = new ProgressBar { Location = new Point(20, 48), Size = new Size(340, 18) };
         var cancel = new Button { Text = "Отмена", Location = new Point(260, 82), AutoSize = true };
@@ -145,7 +146,7 @@ internal sealed class UpdateController : IDisposable
             handedOff = true; dialog.Close(); install();
         }
         catch (OperationCanceledException) { }
-        catch (Exception ex) { dialog.Close(); owner.Enabled = true; MessageBox.Show(owner, ex is InvalidOperationException ? ex.Message : "Не удалось скачать или установить обновление. Проверьте подключение и права на папку PoFig, затем повторите попытку. Текущая версия сохранена.", "Обновление не установлено", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        catch (Exception ex) { dialog.Close(); owner.Enabled = true; AppDialog.Show(ex is InvalidOperationException ? ex.Message : "Не удалось скачать или установить обновление. Проверьте подключение и права на папку PoFig, затем повторите попытку. Текущая версия сохранена.", "Обновление не установлено", owner); }
         finally
         {
             dialog.Close(); download.Dispose(); download = null;

@@ -118,7 +118,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
             .font: NSFont.systemFont(ofSize: 12), .paragraphStyle: paragraph
         ])
         var options: [NSApplication.AboutPanelOptionKey: Any] = [.credits: credits]
-        if let icon = NSApp.applicationIconImage {
+        if let icon = AppIcon.image {
             options[.applicationIcon] = icon
         }
         NSApp.orderFrontStandardAboutPanel(options: options)
@@ -278,7 +278,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     @objc private func removeProxy() {
         guard let selected, window.attachedSheet == nil else { return }
         cancelCheck()
-        let alert = NSAlert()
+        let alert = AppIcon.alert()
         alert.messageText = "Удалить прокси «\(selected.name)»?"
         alert.informativeText = "Прокси и его сохранённый пароль будут удалены. Открытая Figma продолжит работу с текущими настройками."
         alert.addButton(withTitle: "Отмена")
@@ -340,7 +340,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         guard !updateBusy else { return }
         guard let selected else { return }
         guard let url = launcher.locate(savedPath: store.settings.figmaPath) else {
-            let alert = NSAlert()
+            let alert = AppIcon.alert()
             alert.messageText = "Установите Figma"
             alert.informativeText = "PoFig запускает официальный клиент Figma. Скачайте его с сайта Figma или выберите уже установленное приложение."
             alert.addButton(withTitle: "Скачать Figma"); alert.addButton(withTitle: "Отмена")
@@ -369,8 +369,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
     }
     private func showError(_ error: Error) {
         if window != nil { showWindow() }
-        let alert = NSAlert()
-        alert.alertStyle = .warning
+        let alert = AppIcon.alert(style: .warning)
         alert.messageText = "PoFig"
         alert.informativeText = error.localizedDescription
         alert.addButton(withTitle: "Понятно")

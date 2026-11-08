@@ -7,7 +7,7 @@ internal sealed class ProxyEditor : Form
     private readonly Label error = new() { AutoSize = true, ForeColor = Color.Firebrick, MaximumSize = new Size(510, 60) };
     public ProxyEditor(ProxyProfile original, string password, Action<ProxyProfile, string> save)
     {
-        Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        AppIcon.Apply(this);
         Text = original.Name.Length == 0 ? "Новый прокси" : "Изменить прокси";
         ClientSize = new Size(610, 410); AutoScaleMode = AutoScaleMode.Dpi;
         FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = false;

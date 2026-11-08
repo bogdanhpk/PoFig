@@ -244,7 +244,7 @@ final class UpdateController: NSObject {
         guard !installing, let release, let window, window.attachedSheet == nil else { return }
         if !manual && (!window.isVisible || !canInstall() || dismissed == release.version) { return }
         if !canInstall() { message("Сначала закройте Figma", "Затем нажмите «Обновить» ещё раз. Пока Figma открыта, PoFig поддерживает её соединение с прокси."); return }
-        let alert = NSAlert(); alert.messageText = "Доступен PoFig \(release.version)"
+        let alert = AppIcon.alert(); alert.messageText = "Доступен PoFig \(release.version)"
         alert.informativeText = "Установить обновление и перезапустить PoFig? Ваши прокси и пароли сохранятся."
         alert.addButton(withTitle: "Обновить"); alert.addButton(withTitle: "Позже")
         alert.beginSheetModal(for: window) { [weak self] result in
@@ -255,7 +255,7 @@ final class UpdateController: NSObject {
     }
     private func message(_ title: String, _ text: String) {
         guard let window, window.attachedSheet == nil else { return }
-        let alert = NSAlert(); alert.messageText = title; alert.informativeText = text; alert.addButton(withTitle: "Понятно")
+        let alert = AppIcon.alert(); alert.messageText = title; alert.informativeText = text; alert.addButton(withTitle: "Понятно")
         alert.beginSheetModal(for: window)
     }
     @objc private func cancelDownload() { cancelButton?.isEnabled = false; transport.cancel() }
